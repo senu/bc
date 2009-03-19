@@ -16,7 +16,7 @@ class Messages
 	public static final int MSG_FIND_BLOCK = 2;
 	public static final int MSG_PING = 3;
 
-	public static Message newMessage(int type, RobotController who)
+	public static Message hungryMessage(int type, RobotController who)
 	{
 		Message m = new Message();
 		RobotLevel rl = who.getRobot().getRobotLevel();
@@ -28,8 +28,7 @@ class Messages
 			}
 			rli++;
 		}
-//(int)Math.round(who.getMaxEnergonLevel() - who.getEventualEnergonLevel()
-		m.ints = new int[]{type, rli, 10};
+		m.ints = new int[]{type, rli, (int)Math.round(who.getMaxEnergonLevel() - who.getEventualEnergonLevel())};
 		m.locations = new MapLocation[]{who.getLocation()};
 
 		return m;
@@ -42,10 +41,10 @@ class Messages
 		return m;
 	}
 
-	public static Message newRequestBlockMessage(MapLocation loc)
+	public static Message newRequestBlockMessage(MapLocation loc, int howFar)
 	{
 		Message m = new Message();
-		m.ints = new int[]{MSG_FIND_BLOCK};
+		m.ints = new int[]{MSG_FIND_BLOCK, howFar};
 		m.locations = new MapLocation[]{loc};
 		return m;
 

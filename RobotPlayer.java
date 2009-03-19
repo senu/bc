@@ -98,7 +98,7 @@ public class RobotPlayer implements Runnable
 
 		int count = 0;
 
-		while (!queue.isEmpty() && count < 100) {
+		while (!queue.isEmpty() && count < 400) {
 			count++; //TODO
 			WeightedMapLocation wcur = queue.remove();
 
@@ -124,7 +124,7 @@ public class RobotPlayer implements Runnable
 				return cur;
 			}
 
-			for (Direction dir : Direction.values()) {
+			for (Direction dir : Utils.movableDirections()) {
 
 				MapLocation next = cur.add(dir);
 
@@ -192,7 +192,7 @@ public class RobotPlayer implements Runnable
 			goal = Goal.GOAL_NONE;
 		}
 
-		debug_print("hello!, i'm %s", robotType);
+//		debug_print("hello!, i'm %s", robotType);
 	}
 
 	/* Liczba z przedzialu 0.0 do 1.0*/
@@ -208,7 +208,7 @@ public class RobotPlayer implements Runnable
 		}
 		yield_mv();
 
-//		nextLoc = a_star_loc(curLoc, nextLoc); //TODO
+		//nextLoc = a_star_loc(curLoc, nextLoc); //TODO
 
 		Direction nextDir = curLoc.directionTo(nextLoc);
 
@@ -227,7 +227,9 @@ public class RobotPlayer implements Runnable
 			yield_mv();
 		} else {
 //			debug_print("bad loc");
-			map.put(nextLoc, LocStatus.LOC_BAD); //TODO to blokuje pole na zawsze, gdy stoi tam robot
+			if (rc.canSenseSquare(nextLoc) && rc.senseGroundRobotAtLocation(nextLoc) == null) {
+				map.put(nextLoc, LocStatus.LOC_BAD); //TODO to blokuje pole na zawsze, gdy stoi tam robot
+			}
 		}
 	}
 
@@ -268,7 +270,7 @@ public class RobotPlayer implements Runnable
 	private final void arch_find_flux() throws GameActionException
 	{
 		rc.setIndicatorString(1, "find_flux");
-		ping();
+		//ping();
 
 		Direction dir = rc.senseDirectionToUnownedFluxDeposit();
 
@@ -278,7 +280,7 @@ public class RobotPlayer implements Runnable
 			if (rc.canMove(rc.getDirection())) {
 				rc.moveForward();
 			} else {
-				ping();
+//				ping();
 				//rc.setDirection(rc.getDirection().rotateLeft());
 				arch_go_stupid(20);
 			}
@@ -299,10 +301,10 @@ public class RobotPlayer implements Runnable
 				rc.setIndicatorString(1, "extract");
 				arch_handleIU();
 				rc.yield();
-				if (rand.nextInt(100) == 0) {
-					arch_requestBlock();
+				if (rand.nextInt(50) == 0) {
+					arch_requestBlock(rand.nextInt(5)+3);
 				}
-				if (i % 300 == 0) {
+				if (i % 100 == 0) {
 					arch_buildWorker();
 				}
 			}
@@ -326,9 +328,9 @@ public class RobotPlayer implements Runnable
 		}
 	}
 
-	private final void arch_requestBlock() throws GameActionException
+	private final void arch_requestBlock(int howFar) throws GameActionException
 	{
-		rc.broadcast(Messages.newRequestBlockMessage(rc.getLocation()));
+		rc.broadcast(Messages.newRequestBlockMessage(rc.getLocation(), howFar));
 	}
 
 	private final void arch_handleIU() throws GameActionException
@@ -382,8 +384,8 @@ public class RobotPlayer implements Runnable
 				MapLocation loc = worker_nearestArchon();
 
 				if (loc != null) {
-					if (curLoc.distanceSquaredTo(loc) <= 1) {
-						rc.broadcast(Messages.newMessage(Messages.MSG_HUNGRY, rc));
+					if (curLoc.isAdjacentTo(loc) || curLoc.equals(loc)) {
+						rc.broadcast(Messages.hungryMessage(Messages.MSG_HUNGRY, rc));
 						while (health() <= 0.35) {
 							rc.yield();
 						}
@@ -397,11 +399,44 @@ public class RobotPlayer implements Runnable
 		} else {
 			//orders
 			Message[] msgs = rc.getAllMessages();
+			int howFar;
 			for (Message msg : msgs) {
 				if (msg.ints[0] == Messages.MSG_FIND_BLOCK && worker_block_goal == null) {
 					worker_block_goal = msg.locations[0];
+					howFar = msg.ints[1];
 					//				debug_print("before go rand");
-					worker_go_rand();
+
+					//cp
+
+
+					/*
+					while (health() < 0.6) {
+					curLoc = rc.getLocation();
+
+					yieldIf(_mediumBc);
+					MapLocation loc = worker_nearestArchon();
+
+					if (loc != null) {
+					if (curLoc.distanceSquaredTo(loc) <= 1) {
+					rc.broadcast(Messages.hungryMessage(Messages.MSG_HUNGRY, rc));
+					while (health() <= 0.6) {
+					rc.yield();
+					}
+					return;
+					} else {
+					//						debug_print("hungry");
+					goTo(loc);
+					}
+					}
+					}
+					 */
+
+					///
+					worker_go_rand(howFar);
+					if (rc.senseNumBlocksInCargo(rc.getRobot()) != 0) {
+//						debug_print("zle, mam blocka");
+					}
+
 					if (worker_find_block()) {
 						worker_return_block();
 					}
@@ -412,10 +447,11 @@ public class RobotPlayer implements Runnable
 
 	}
 
-	private final void worker_go_rand() throws GameActionException
+	private final void worker_go_rand(int howFar) throws GameActionException
 	{
-		MapLocation floc = Utils.randLocRange(rc.getLocation(), 6, 6, rand);
-		for (int i = 1; i <= 20; i++) {
+		rc.setIndicatorString(1, "go_rand");
+		MapLocation floc = Utils.randLocRange(rc.getLocation(), howFar, howFar, rand);
+		for (int i = 1; i <= 30; i++) {
 			goTo(floc);
 			worker_handleIU();
 			curLoc = rc.getLocation();
@@ -427,12 +463,13 @@ public class RobotPlayer implements Runnable
 
 	private final boolean worker_find_block() throws GameActionException
 	{
+		rc.setIndicatorString(1, "find_block");
 		curLoc = rc.getLocation();
 		MapLocation[] blocks = rc.senseNearbyBlocks();
 		List<MapLocation> goodBlocks = new ArrayList<MapLocation>(blocks.length / 2);
 
 		for (MapLocation loc : blocks) {
-			if (loc.distanceSquaredTo(worker_block_goal) > 2) {
+			if (loc.distanceSquaredTo(worker_block_goal) > 6) {
 				goodBlocks.add(loc);
 			}
 		}
@@ -458,15 +495,16 @@ public class RobotPlayer implements Runnable
 
 			curLoc = rc.getLocation();
 			if (rc.canLoadBlockFromLocation(floc) && rc.senseNumBlocksInCargo(rc.getRobot()) == 0) {
+				yield_mv();
 				rc.loadBlockFromLocation(floc);
 				rc.yield();
 				return true;
 			} else {
-				for (Direction dir : Direction.values()) {
+				for (Direction dir : Utils.movableDirections()) {
 					yield_mv();
+					rc.setDirection(dir);
+					rc.yield();
 					if (rc.canMove(dir)) {
-						rc.setDirection(dir);
-						rc.yield();
 						rc.moveForward();
 						rc.yield();
 						yield_mv();
@@ -486,8 +524,11 @@ public class RobotPlayer implements Runnable
 
 	private final void worker_return_block() throws GameActionException
 	{
-		for (;;) { //TODO handle ints
+		final int dropDist = 4;
+		rc.setIndicatorString(1, "return_block");
+		for (int i = 0; i <= 40; i++) { //TODO handle ints
 			curLoc = rc.getLocation();
+//			if (curLoc.distanceSquaredTo(worker_block_goal) <= 1) {
 			if (curLoc.isAdjacentTo(worker_block_goal)) {
 				break;
 			}
@@ -496,9 +537,22 @@ public class RobotPlayer implements Runnable
 
 		yield_mv();
 
+		MapLocation where = worker_block_goal;
+/*
+		if (curLoc.distanceSquaredTo(worker_block_goal) <= dropDist) {
+			if (!rc.canUnloadBlockToLocation(where)) {
+				for (Direction dir : Utils.movableDirections()) {
+					where = rc.getLocation().add(dir);
+					if (rc.canUnloadBlockToLocation(where)) {
+						break;
+					}
+				}
+			}
+		}
+ */
+		if (true) {
+			yieldIf(_mediumBc);
 
-		if (curLoc.isAdjacentTo(worker_block_goal)) {
-			MapLocation where = worker_block_goal;
 			while (!rc.canUnloadBlockToLocation(where)) {//
 				curLoc = rc.getLocation();
 				if (rc.canMove(rc.getDirection().opposite())) {
@@ -507,6 +561,7 @@ public class RobotPlayer implements Runnable
 					yield_mv();
 					where = curLoc;
 				} else {
+//					worker_go_rand(3);
 					break;
 				}
 			}
@@ -514,6 +569,7 @@ public class RobotPlayer implements Runnable
 			if (rc.canUnloadBlockToLocation(where)) {
 				rc.unloadBlockToLocation(where);
 				rc.yield();
+			} else {
 			}
 		}
 	}
