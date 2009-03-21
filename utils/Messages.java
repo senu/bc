@@ -2,7 +2,7 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package batman;
+package batman.utils;
 
 import battlecode.common.*;
 
@@ -10,7 +10,7 @@ import battlecode.common.*;
  *
  * @author pw248348
  */
-class Messages
+public class Messages
 {
 	public static final int MSG_HUNGRY = 1;
 	public static final int MSG_FIND_BLOCK = 2;
@@ -28,7 +28,7 @@ class Messages
 			}
 			rli++;
 		}
-		m.ints = new int[]{type, rli, (int)Math.round(who.getMaxEnergonLevel() - who.getEventualEnergonLevel())};
+		m.ints = new int[]{type, rli, (int) Math.round(who.getMaxEnergonLevel() - who.getEventualEnergonLevel())};
 		m.locations = new MapLocation[]{who.getLocation()};
 
 		return m;
