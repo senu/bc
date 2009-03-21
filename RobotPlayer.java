@@ -302,7 +302,7 @@ public class RobotPlayer implements Runnable
 				arch_handleIU();
 				rc.yield();
 				if (rand.nextInt(50) == 0) {
-					arch_requestBlock(rand.nextInt(3)+3);
+					arch_requestBlock(rand.nextInt(5)+3);
 				}
 				if (i % 100 == 0) {
 					arch_buildWorker();
