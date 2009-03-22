@@ -2,7 +2,7 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package batman.utils;
+package batman.messaging;
 
 import battlecode.common.*;
 
@@ -16,7 +16,7 @@ public class Messages
 	public static final int MSG_FIND_BLOCK = 2;
 	public static final int MSG_PING = 3;
 
-	public static Message hungryMessage(int type, RobotController who)
+	public static Message hungryMessage(RobotController who)
 	{
 		Message m = new Message();
 		RobotLevel rl = who.getRobot().getRobotLevel();
@@ -28,7 +28,7 @@ public class Messages
 			}
 			rli++;
 		}
-		m.ints = new int[]{type, rli, (int) Math.round(who.getMaxEnergonLevel() - who.getEventualEnergonLevel())};
+		m.ints = new int[]{MSG_HUNGRY, rli, (int) Math.round(who.getMaxEnergonLevel() - who.getEventualEnergonLevel())};
 		m.locations = new MapLocation[]{who.getLocation()};
 
 		return m;

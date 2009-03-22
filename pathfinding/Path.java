@@ -1,4 +1,4 @@
-package batman.utils.pathfinding;
+package batman.pathfinding;
 
 import battlecode.common.MapLocation;
 import java.util.ArrayList;
@@ -21,7 +21,7 @@ public class Path
 
 	public Path()
 	{
-		this.path = path = new ArrayList(10);
+		this.path = new ArrayList<MapLocation>();
 		currentIdx = 0;
 	}
 
