@@ -13,8 +13,13 @@ public class MapTile
 	public enum LocState
 	{
 		Unknown,
+		Ground, 
+		Air,
 		Bad, //nie mozna chodzic
-		Good,
+	}
+
+	public MapTile()
+	{
 	}
 
 	public MapTile(LocState state)

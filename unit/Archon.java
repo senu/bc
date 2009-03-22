@@ -1,5 +1,6 @@
 package batman.unit;
 
+import batman.constants.StrategyConstants;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
@@ -9,6 +10,7 @@ import battlecode.common.RobotLevel;
 import battlecode.common.RobotType;
 import batman.messaging.Messages;
 import battlecode.common.GameConstants;
+import battlecode.common.TerrainTile;
 
 /**
  *
@@ -33,14 +35,15 @@ public class Archon extends Unit
 		goStupid(rand.nextInt(60)); //
 		yieldMv();
 
-		/**
-		buildSoldier();
 
+		/*buildSoldier();
+		
 		for (;;) {
-			handleInts();
-			rc.yield();
-		}
-		*/
+		handleInts();
+		rc.yield();
+		if (rand.nextInt(350) == 0) {
+		map.debug_print();
+		}} */
 
 		findFlux(); //
 	}
@@ -59,6 +62,10 @@ public class Archon extends Unit
 			}
 
 			rc.yield();
+
+			if (rand.nextInt(5) == 0) {
+				updateMap();
+			}
 
 		}
 	}
@@ -135,8 +142,10 @@ public class Archon extends Unit
 			handleInts();
 		}
 
-		rc.spawn(RobotType.SOLDIER);
-		rc.yield();
+		if (rc.senseGroundRobotAtLocation(frontLoc()) == null && rc.senseTerrainTile(frontLoc()).getType() == TerrainTile.TerrainType.LAND) {
+			rc.spawn(RobotType.SOLDIER);
+			rc.yield();
+		}
 	}
 
 	private final void handleInts() throws GameActionException
@@ -144,15 +153,33 @@ public class Archon extends Unit
 		Message[] msgs = rc.getAllMessages();
 		for (Message msg : msgs) {
 			if (msg.ints[0] == Messages.MSG_HUNGRY) {
-				MapLocation loc = msg.locations[0];
-				refreshLocation();
-				if (loc.equals(curLoc) || loc.isAdjacentTo(curLoc)) {
-					if (rc.senseGroundRobotAtLocation(loc) != null) { //TODO
-						rc.transferEnergon(msg.ints[2], loc, RobotLevel.values()[msg.ints[1]]);
-						rc.yield();
-					}
+				feed(msg);
+			}
+		}
+
+		if (rand.nextInt(5) == 0) {
+			updateMap();
+		}
+		if (rand.nextInt(150) == 0) {
+			map.debug_print();
+		}
+
+	}
+
+	/** Odpowiada na prosbe o energon. */
+	protected void feed(Message msg) throws GameActionException
+	{
+		MapLocation loc = msg.locations[0];
+		refreshLocation();
+		if (loc.equals(curLoc) || loc.isAdjacentTo(curLoc)) {
+			if (rc.senseGroundRobotAtLocation(loc) != null) { //TODO
+				int howMuch = msg.ints[2];
+				if (hasEnergon(howMuch + StrategyConstants.ARCHON_MIN_ENERGON_LEVEL)) {
+					rc.transferEnergon(howMuch, loc, RobotLevel.values()[msg.ints[1]]);
+					rc.yield();
 				}
 			}
 		}
+
 	}
 }

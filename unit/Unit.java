@@ -11,6 +11,7 @@ import battlecode.common.GameActionException;
 import battlecode.common.GameConstants;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
+import battlecode.common.TerrainTile;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -160,5 +161,49 @@ public abstract class Unit
 				map.setTile(nextLoc, new MapTile(MapTile.LocState.Bad)); //TODO to blokuje pole na zawsze, gdy stoi tam robot
 			}
 		}
+	}
+
+	protected void updateMap() throws GameActionException
+	{
+		int rstart = Clock.getRoundNum();
+		List<MapLocation> locs = getLocsInSensorRange();
+		for (MapLocation loc : locs) {
+			map.setTile(loc, scanLoc(loc));
+		}
+
+//TODO czasem za duzo		debug_print("updateMap took:%d", Clock.getRoundNum() - rstart);
+	}
+
+	protected final MapTile scanLoc(MapLocation loc) throws GameActionException
+	{
+		MapTile tile = new MapTile();
+		yieldMediumBC();
+
+		TerrainTile tt = rc.senseTerrainTile(loc);
+
+		switch (tt.getType()) {
+			case LAND:
+				tile.state = MapTile.LocState.Ground;
+				break;
+			case VOID:
+				tile.state = MapTile.LocState.Air;
+				break;
+			case OFF_MAP:
+				tile.state = MapTile.LocState.Bad;
+				break;
+		}
+
+		tile.airRobot = rc.senseAirRobotAtLocation(loc);
+		tile.groundRobot = rc.senseGroundRobotAtLocation(loc);
+		tile.blockCount = rc.senseNumBlocksAtLocation(loc);
+		tile.height = tt.getHeight();
+
+		return tile;
+	}
+
+	/** Lokacja przed nosem. */
+	protected MapLocation frontLoc()
+	{
+		return refreshLocation().add(rc.getDirection());
 	}
 }

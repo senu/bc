@@ -22,10 +22,10 @@ public class Soldier extends Unit
 	public void beYourself() throws GameActionException
 	{
 		for (;;) {
-
 			handleInts();
 			rc.yield();
-
+			updateMap();
+			rc.yield();
 		}
 	}
 
