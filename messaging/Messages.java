@@ -4,6 +4,7 @@
  */
 package batman.messaging;
 
+import batman.messaging.message.HungerMessage;
 import battlecode.common.*;
 
 /**
@@ -12,11 +13,13 @@ import battlecode.common.*;
  */
 public class Messages
 {
+	/*
 	public static final int MSG_HUNGRY = 1;
 	public static final int MSG_FIND_BLOCK = 2;
 	public static final int MSG_PING = 3;
 	public static final int MSG_MAP_TRANSFER_REQUEST = 4;
 	public static final int MSG_MAP_TRANSFER_RESPONSE = 5;
+	 */
 
 	public static Message hungryMessage(RobotController who)
 	{
@@ -30,12 +33,4 @@ public class Messages
 		return m;
 	}
 
-	public static Message newRequestBlockMessage(MapLocation loc, int howFar)
-	{
-		Message m = new Message();
-		m.ints = new int[]{MSG_FIND_BLOCK, howFar};
-		m.locations = new MapLocation[]{loc};
-		return m;
-
-	}
 }

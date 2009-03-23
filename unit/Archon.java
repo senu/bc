@@ -11,7 +11,7 @@ import battlecode.common.RobotController;
 import battlecode.common.RobotLevel;
 import battlecode.common.RobotType;
 import batman.messaging.Messages;
-import batman.messaging.OrderMessage;
+import batman.messaging.message.OrderMessage;
 import batman.pathfinding.AStar;
 import batman.pathfinding.Path;
 import batman.utils.Utils;

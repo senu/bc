@@ -2,7 +2,7 @@ package batman.management.order;
 
 import batman.management.executor.Executor;
 import batman.management.result.ExecutionResult;
-import batman.messaging.IMessage;
+import batman.messaging.message.IMessage;
 import batman.messaging.serialization.MutableMessage;
 import batman.messaging.serialization.SerializationIterator;
 import battlecode.common.GameActionException;

@@ -3,9 +3,9 @@ package batman.unit;
 import batman.constants.ByteCodeConstants;
 import batman.management.order.SingleMoveOrder;
 import batman.management.result.ExecutionResult;
-import batman.messaging.IMessage;
+import batman.messaging.message.IMessage;
 import batman.messaging.Messages;
-import batman.messaging.OrderMessage;
+import batman.messaging.message.OrderMessage;
 import batman.utils.Utils;
 import batman.pathfinding.GameMap;
 import batman.pathfinding.MapTile;
@@ -254,8 +254,8 @@ public abstract class Unit
 
 		for (Message m : msgs) {
 			switch (m.ints[0]) {
-				case OrderMessage.getSerializedId():
-					break;
+//				case OrderMessage.getSerializedId():
+//					break;
 			}
 		//	ret.add()
 		}
