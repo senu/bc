@@ -251,13 +251,9 @@ public abstract class Unit
 		Message[] msgs = rc.getAllMessages();
 		List<IMessage> ret = new ArrayList<IMessage>();
 
-
 		for (Message m : msgs) {
-			switch (m.ints[0]) {
-//				case OrderMessage.getSerializedId():
-//					break;
-			}
-		//	ret.add()
+			int type = m.ints[0];
+			if ()
 		}
 
 		return ret;
