@@ -12,8 +12,18 @@ import battlecode.common.Message;
 public class RequestBlockMessage extends MessageImpl
 {
 	/** Jak daleko ma odejsc by szukac bloku */
-	int howFar;
-	MapLocation whereToUnload;
+	public int howFar;
+	public MapLocation whereToUnload;
+
+	public RequestBlockMessage()
+	{
+	}
+
+	public RequestBlockMessage(int howFar, MapLocation whereToUnload)
+	{
+		this.howFar = howFar;
+		this.whereToUnload = whereToUnload;
+	}
 
 	@Override
 	public int getMessageType()

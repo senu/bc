@@ -1,11 +1,15 @@
 package batman.unit;
 
 import batman.constants.ByteCodeConstants;
-import batman.management.order.SingleMoveOrder;
 import batman.management.result.ExecutionResult;
 import batman.messaging.message.IMessage;
 import batman.messaging.Messages;
+import batman.messaging.message.HungerMessage;
+import batman.messaging.message.MapTransferRequestMessage;
+import batman.messaging.message.MapTransferResponseMessage;
+import batman.messaging.message.MessageImpl;
 import batman.messaging.message.OrderMessage;
+import batman.messaging.message.RequestBlockMessage;
 import batman.utils.Utils;
 import batman.pathfinding.GameMap;
 import batman.pathfinding.MapTile;
@@ -19,7 +23,9 @@ import battlecode.common.Message;
 import battlecode.common.RobotController;
 import battlecode.common.TerrainTile;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 /**
@@ -63,7 +69,7 @@ public abstract class Unit
 	protected final void ping() throws GameActionException
 	{
 		for (int i = 1; i <= 10; i++) {
-			rc.broadcast(Messages.newSimpleMessage(Messages.MSG_PING));
+//TODO			rc.broadcast(Messages.newSimpleMessage(Messages.MSG_PING));
 			rc.yield();
 		}
 	}
@@ -251,10 +257,39 @@ public abstract class Unit
 		Message[] msgs = rc.getAllMessages();
 		List<IMessage> ret = new ArrayList<IMessage>();
 
-		for (Message m : msgs) {
-			int type = m.ints[0];
-			if ()
+
+		//TODO in ctor
+
+		//TODO tak sie tego nie robi
+		Class[] messageClasses = new Class[]{
+			HungerMessage.class,
+			MapTransferRequestMessage.class,
+			MapTransferResponseMessage.class,
+			OrderMessage.class,
+			RequestBlockMessage.class,};
+
+
+
+		Map<Integer, Class> messageTypes = new HashMap<Integer, Class>();
+
+		try {
+			for (Class clazz : messageClasses) {
+				messageTypes.put(((MessageImpl) clazz.newInstance()).getMessageType(), clazz);
+			}
+
+
+			for (Message m : msgs) {
+				int type = m.ints[0];
+				IMessage newMsg = ((IMessage) messageTypes.get(type).newInstance());
+				newMsg.deserialize(m);
+				ret.add(newMsg);
+			}
+
+		} catch (Exception e) {
+			debug_print("serialization errror");
+			e.printStackTrace();
 		}
+
 
 		return ret;
 

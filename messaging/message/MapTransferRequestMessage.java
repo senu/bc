@@ -19,6 +19,10 @@ public class MapTransferRequestMessage extends MessageImpl
 		return 4;
 	}
 
+	public MapTransferRequestMessage()
+	{
+	}
+
 	public MapTransferRequestMessage(MapLocation minLoc, MapLocation maxLoc, int minRound)
 	{
 		this.minLoc = minLoc;

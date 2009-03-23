@@ -13,6 +13,8 @@ public interface IMessage
 
 	public int getPriority();
 
+	public int getMessageType();
+
 	public Message serialize();
 
 	public void deserialize(Message msg);

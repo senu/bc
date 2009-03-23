@@ -14,6 +14,10 @@ public class OrderMessage extends MessageImpl
 {
 	public Order order;
 
+	public OrderMessage()
+	{
+	}
+
 	public OrderMessage(Order order)
 	{
 		this.order = order;

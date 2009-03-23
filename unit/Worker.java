@@ -3,11 +3,12 @@ package batman.unit;
 import batman.constants.ByteCodeConstants;
 import batman.constants.StrategyConstants;
 import batman.messaging.Messages;
+import batman.messaging.message.IMessage;
+import batman.messaging.message.RequestBlockMessage;
 import batman.utils.Utils;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
-import battlecode.common.Message;
 import battlecode.common.RobotController;
 import java.util.ArrayList;
 import java.util.List;
@@ -62,12 +63,12 @@ public class Worker extends Unit
 			}
 		} else {
 			//orders
-			Message[] msgs = rc.getAllMessages();
 			int howFar;
-			for (Message msg : msgs) {
-				if (msg.ints[0] == Messages.MSG_FIND_BLOCK && blockGoal == null) {
-					blockGoal = msg.locations[0];
-					howFar = msg.ints[1];
+			for (IMessage msg : getMessages()) {
+				if (msg instanceof RequestBlockMessage && blockGoal == null) {
+					RequestBlockMessage rmsg = (RequestBlockMessage) msg;
+					blockGoal = rmsg.whereToUnload;
+					howFar = rmsg.howFar;
 					//				debug_print("before go rand");
 
 					//cp

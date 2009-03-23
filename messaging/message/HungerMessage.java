@@ -13,9 +13,9 @@ import battlecode.common.RobotLevel;
  */
 public class HungerMessage extends MessageImpl
 {
-	int rl;
-	int howMuch;
-	MapLocation where;
+	public RobotLevel rl;
+	public int howMuch;
+	public MapLocation where;
 
 	@Override
 	public final int getMessageType()
@@ -23,9 +23,13 @@ public class HungerMessage extends MessageImpl
 		return 1;
 	}
 
+	public HungerMessage()
+	{
+	}
+
 	public HungerMessage(RobotController who)
 	{
-		rl = (who.getRobot().getRobotLevel() == RobotLevel.IN_AIR) ? 0 : 1;
+		rl = who.getRobot().getRobotLevel();
 		howMuch = (int) Math.round(who.getMaxEnergonLevel() - who.getEventualEnergonLevel());
 		where = who.getLocation();
 	}
@@ -34,7 +38,7 @@ public class HungerMessage extends MessageImpl
 	{
 		MutableMessage m = serializeStart();
 
-		m.ints.add(rl);
+		m.ints.add(rl.ordinal());
 		m.ints.add(howMuch);
 
 		m.locations.add(where);
@@ -45,7 +49,7 @@ public class HungerMessage extends MessageImpl
 	public void deserialize(Message m)
 	{
 		SerializationIterator it = deserializeStart(m);
-		rl = it.getInt();
+		rl = RobotLevel.values()[it.getInt()];
 		howMuch = it.getInt();
 		where = it.getLoc();
 	}

@@ -13,8 +13,6 @@ public abstract class MessageImpl implements IMessage
 	public int round;
 	public int priority;
 
-	public abstract int getMessageType();
-
 	public SerializationIterator deserializeStart(Message msg)
 	{
 		round = msg.ints[1];
