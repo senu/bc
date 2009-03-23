@@ -1,6 +1,8 @@
 package batman.unit;
 
 import batman.constants.StrategyConstants;
+import batman.management.order.Order;
+import batman.management.order.SingleMoveOrder;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
@@ -9,6 +11,7 @@ import battlecode.common.RobotController;
 import battlecode.common.RobotLevel;
 import battlecode.common.RobotType;
 import batman.messaging.Messages;
+import batman.messaging.OrderMessage;
 import batman.pathfinding.AStar;
 import batman.pathfinding.Path;
 import batman.utils.Utils;
@@ -20,13 +23,11 @@ import battlecode.common.TerrainTile;
  */
 public class Archon extends Unit
 {
-	public Archon(RobotController rc)
-	{
+	public Archon(RobotController rc) {
 		super(rc);
 	}
 
-	public final void beYourself() throws GameActionException
-	{
+	public final void beYourself() throws GameActionException {
 		yieldMv();
 
 
@@ -51,6 +52,12 @@ public class Archon extends Unit
 
 		buildSoldier();
 
+
+
+		Order order = new SingleMoveOrder(Utils.add(refreshLocation(), 5, 5));
+		rc.broadcast(new OrderMessage(order).serialize());
+
+
 		for (;;) {
 			handleInts();
 			rc.yield();
@@ -68,8 +75,7 @@ public class Archon extends Unit
 //		findFlux(); //
 	}
 
-	private final void goStupid(int howLong) throws GameActionException
-	{
+	private final void goStupid(int howLong) throws GameActionException {
 		rc.setIndicatorString(1, "go_stupid");
 		for (int i = 1; i <= howLong; i++) {
 
@@ -90,8 +96,7 @@ public class Archon extends Unit
 		}
 	}
 
-	private final void findFlux() throws GameActionException
-	{
+	private final void findFlux() throws GameActionException {
 		rc.setIndicatorString(1, "find_flux");
 		//ping();
 
@@ -134,8 +139,7 @@ public class Archon extends Unit
 		}
 	}
 
-	private final void buildWorker() throws GameActionException
-	{
+	private final void buildWorker() throws GameActionException {
 		try {
 			while (rc.senseGroundRobotAtLocation(rc.getLocation().add(rc.getDirection())) != null) {
 				rc.setDirection(rc.getDirection().rotateRight());
@@ -151,13 +155,11 @@ public class Archon extends Unit
 		}
 	}
 
-	private final void requestBlock(int howFar) throws GameActionException
-	{
+	private final void requestBlock(int howFar) throws GameActionException {
 		rc.broadcast(Messages.newRequestBlockMessage(rc.getLocation(), howFar));
 	}
 
-	private void buildSoldier() throws GameActionException
-	{
+	private void buildSoldier() throws GameActionException {
 		while (!hasEnergon(RobotType.SOLDIER.spawnCost())) {
 			handleInts();
 		}
@@ -168,8 +170,7 @@ public class Archon extends Unit
 		}
 	}
 
-	private final void handleInts() throws GameActionException
-	{
+	private final void handleInts() throws GameActionException {
 		Message[] msgs = rc.getAllMessages();
 		for (Message msg : msgs) {
 			if (msg.ints[0] == Messages.MSG_HUNGRY) {
@@ -182,14 +183,12 @@ public class Archon extends Unit
 		}
 
 		if (rand.nextInt(5) == 0) {
-
 		}
 
 	}
 
 	/** Odpowiada na prosbe o energon. */
-	protected void feed(Message msg) throws GameActionException
-	{
+	protected void feed(Message msg) throws GameActionException {
 		MapLocation loc = msg.locations[0];
 		refreshLocation();
 		if (loc.equals(curLoc) || loc.isAdjacentTo(curLoc)) {

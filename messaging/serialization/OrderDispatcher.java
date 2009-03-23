@@ -12,7 +12,7 @@ import batman.management.order.SingleMoveOrder;
  */
 public class OrderDispatcher
 {
-	public Order getOrderByRepresentation(String name)
+	public static Order getOrderByRepresentation(String name)
 	{
 
 		if (name.equals("PathFindMoveOrder")) {

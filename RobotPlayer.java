@@ -4,14 +4,8 @@ import batman.unit.Archon;
 import batman.unit.Soldier;
 import batman.unit.Unit;
 import batman.unit.Worker;
-import batman.utils.Utils;
-import batman.utils.WeightedMapLocation;
 import battlecode.common.*;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.PriorityQueue;
 import java.util.Random;
-import java.util.Set;
 
 public class RobotPlayer implements Runnable
 {

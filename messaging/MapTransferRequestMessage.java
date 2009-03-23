@@ -12,6 +12,11 @@ public class MapTransferRequestMessage implements IMessage
 	public MapLocation minLoc,  maxLoc;
 	public int minRound;
 
+	public static final int getSerializedId()
+	{
+		return 4;
+	}
+
 	public MapTransferRequestMessage(MapLocation minLoc, MapLocation maxLoc, int minRound)
 	{
 		this.minLoc = minLoc;
@@ -35,6 +40,4 @@ public class MapTransferRequestMessage implements IMessage
 		maxLoc = msg.locations[1];
 		minRound = msg.ints[1];
 	}
-
-
 }

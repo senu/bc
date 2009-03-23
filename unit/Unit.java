@@ -1,8 +1,11 @@
 package batman.unit;
 
 import batman.constants.ByteCodeConstants;
+import batman.management.order.SingleMoveOrder;
 import batman.management.result.ExecutionResult;
+import batman.messaging.IMessage;
 import batman.messaging.Messages;
+import batman.messaging.OrderMessage;
 import batman.utils.Utils;
 import batman.pathfinding.GameMap;
 import batman.pathfinding.MapTile;
@@ -12,6 +15,7 @@ import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.GameConstants;
 import battlecode.common.MapLocation;
+import battlecode.common.Message;
 import battlecode.common.RobotController;
 import battlecode.common.TerrainTile;
 import java.util.ArrayList;
@@ -230,6 +234,34 @@ public abstract class Unit
 
 		yieldMv();
 		return ExecutionResult.OK;
+
+	}
+
+	public ExecutionResult sleep(int howLong)
+	{
+		for (int i = 1; i <= howLong; i++) {
+			rc.yield();
+		}
+
+		return ExecutionResult.OK;
+	}
+
+	public List<IMessage> getMessages()
+	{
+		Message[] msgs = rc.getAllMessages();
+		List<IMessage> ret = new ArrayList<IMessage>();
+
+
+		for (Message m : msgs) {
+			switch (m.ints[0]) {
+				case OrderMessage.getSerializedId():
+					break;
+			}
+		//	ret.add()
+		}
+
+		return ret;
+
 
 	}
 }

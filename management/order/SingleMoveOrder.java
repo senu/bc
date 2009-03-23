@@ -12,27 +12,30 @@ import battlecode.common.Message;
  *
  * @author senu
  */
-public class SingleMoveOrder implements Order
-{
+public class SingleMoveOrder implements Order {
+
 	public MapLocation where;
 
-	public ExecutionResult execute(Executor executor) throws GameActionException
-	{
+	public SingleMoveOrder(MapLocation where) {
+		this.where = where;
+	}
+
+	public SingleMoveOrder() {
+	}
+
+	public ExecutionResult execute(Executor executor) throws GameActionException {
 		return executor.executeSingleMoveOrder(this);
 	}
 
-	public String getOrderName()
-	{
+	public String getOrderName() {
 		return this.getClass().getSimpleName();
 	}
 
-	public void deserialize(Message m, SerializationIterator it)
-	{
+	public void deserialize(Message m, SerializationIterator it) {
 		where = m.locations[it.li++];
 	}
 
-	public void serialize(MutableMessage m)
-	{
+	public void serialize(MutableMessage m) {
 		m.strings.add(getOrderName());
 		m.locations.add(where);
 	}
