@@ -1,5 +1,6 @@
 package batman.pathfinding;
 
+import batman.utils.SimpleRobotInfo;
 import battlecode.common.Clock;
 import battlecode.common.Robot;
 
@@ -37,6 +38,6 @@ public class MapTile
 	public int height;
 	public int blockCount;
 	public LocState state;
-	public Robot groundRobot;
-	public Robot airRobot;
+	public SimpleRobotInfo groundRobot;
+	public SimpleRobotInfo airRobot;
 }

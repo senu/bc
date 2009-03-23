@@ -9,7 +9,9 @@ import battlecode.common.RobotController;
 import battlecode.common.RobotLevel;
 import battlecode.common.RobotType;
 import batman.messaging.Messages;
-import battlecode.common.GameConstants;
+import batman.pathfinding.AStar;
+import batman.pathfinding.Path;
+import batman.utils.Utils;
 import battlecode.common.TerrainTile;
 
 /**
@@ -27,25 +29,43 @@ public class Archon extends Unit
 	{
 		yieldMv();
 
-		if (rand.nextBoolean()) {
-			rc.setDirection(rc.getDirection().opposite());
-			rc.yield();
+
+		if (rc.senseAlliedArchons().length > 1) {
+			rc.suicide();
 		}
 
-		goStupid(rand.nextInt(60)); //
+
+		for (int i = 0; i < 34; i++) {
+			goTo(Utils.add(refreshLocation(), 30, 30));
+			handleInts();
+		}
+
+		for (int i = 0; i < 17; i++) {
+			goTo(Utils.add(refreshLocation(), -10, -10));
+			handleInts();
+		}
+
+		//goStupid(rand.nextInt(20)); //
+
 		yieldMv();
 
+		buildSoldier();
 
-		/*buildSoldier();
-		
 		for (;;) {
-		handleInts();
-		rc.yield();
-		if (rand.nextInt(350) == 0) {
-		map.debug_print();
-		}} */
+			handleInts();
+			rc.yield();
+			if (rand.nextInt(350) == 0) {
+				AStar alg = new AStar();
+				MapLocation to = Utils.randLocRange(curLoc, 30, 30, rand);
+				Path path = alg.findPath(refreshLocation(), to, map, rc.getRobotType());
 
-		findFlux(); //
+				debug_print("%d %d ----> %d %d", curLoc.getX(), curLoc.getY(), to.getX(), to.getY());
+				map.debug_print();
+				map.debug_print(path);
+			}
+		}
+
+//		findFlux(); //
 	}
 
 	private final void goStupid(int howLong) throws GameActionException
@@ -160,8 +180,9 @@ public class Archon extends Unit
 		if (rand.nextInt(5) == 0) {
 			updateMap();
 		}
-		if (rand.nextInt(150) == 0) {
-			map.debug_print();
+
+		if (rand.nextInt(5) == 0) {
+
 		}
 
 	}

@@ -1,10 +1,12 @@
 package batman.unit;
 
 import batman.constants.ByteCodeConstants;
+import batman.management.result.ExecutionResult;
 import batman.messaging.Messages;
 import batman.utils.Utils;
 import batman.pathfinding.GameMap;
 import batman.pathfinding.MapTile;
+import batman.utils.SimpleRobotInfo;
 import battlecode.common.Clock;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
@@ -177,7 +179,7 @@ public abstract class Unit
 	protected final MapTile scanLoc(MapLocation loc) throws GameActionException
 	{
 		MapTile tile = new MapTile();
-		yieldMediumBC();
+		yieldSmallBC();
 
 		TerrainTile tt = rc.senseTerrainTile(loc);
 
@@ -193,8 +195,8 @@ public abstract class Unit
 				break;
 		}
 
-		tile.airRobot = rc.senseAirRobotAtLocation(loc);
-		tile.groundRobot = rc.senseGroundRobotAtLocation(loc);
+		tile.airRobot = new SimpleRobotInfo(rc.senseRobotInfo(rc.senseAirRobotAtLocation(loc)));
+		tile.groundRobot = new SimpleRobotInfo(rc.senseRobotInfo(rc.senseGroundRobotAtLocation(loc)));
 		tile.blockCount = rc.senseNumBlocksAtLocation(loc);
 		tile.height = tt.getHeight();
 
@@ -205,5 +207,29 @@ public abstract class Unit
 	protected MapLocation frontLoc()
 	{
 		return refreshLocation().add(rc.getDirection());
+	}
+
+	public ExecutionResult singleMove(MapLocation where) throws GameActionException
+	{
+		if (curLoc.equals(where)) {
+			return ExecutionResult.OK;
+		}
+
+		yieldMv();
+
+		Direction nextDir = curLoc.directionTo(where);
+		rc.setDirection(nextDir);
+		rc.yield();
+
+		if (rc.canMove(rc.getDirection())) {
+			rc.moveForward();
+			rc.yield();
+		} else {
+			return ExecutionResult.Failed;
+		}
+
+		yieldMv();
+		return ExecutionResult.OK;
+
 	}
 }
