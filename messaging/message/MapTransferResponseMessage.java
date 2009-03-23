@@ -45,10 +45,20 @@ public class MapTransferResponseMessage extends MessageImpl
 			m.ints.add(tile.height);
 			m.ints.add(tile.roundSeen);
 			m.ints.add(tile.state.ordinal());
-			m.ints.add(tile.groundRobot.type.ordinal());
-			m.ints.add(tile.groundRobot.team.ordinal());
-			m.ints.add(tile.airRobot.type.ordinal());
-			m.ints.add(tile.airRobot.team.ordinal());
+			if (tile.groundRobot != null) {
+				m.ints.add(tile.groundRobot.type.ordinal());
+				m.ints.add(tile.groundRobot.team.ordinal());
+			} else {
+				m.ints.add(-1);
+				m.ints.add(-1);
+			}
+			if (tile.airRobot != null) {
+				m.ints.add(tile.airRobot.type.ordinal());
+				m.ints.add(tile.airRobot.team.ordinal());
+			} else {
+				m.ints.add(-1);
+				m.ints.add(-1);
+			}
 		}
 
 		return m.serialize();
@@ -69,7 +79,7 @@ public class MapTransferResponseMessage extends MessageImpl
 			tile.blockCount = it.getInt();
 			tile.height = it.getInt();
 			tile.roundSeen = it.getInt();
-			tile.state = MapTile.LocState.class.getEnumConstants()[it.getInt()];
+			tile.state = MapTile.LocState.values()[it.getInt()];
 			tile.groundRobot.type = RobotType.values()[it.getInt()];
 			tile.groundRobot.team = Team.values()[it.getInt()];
 			tile.airRobot.type = RobotType.values()[it.getInt()];

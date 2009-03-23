@@ -8,7 +8,7 @@ import java.util.Random;
  *
  * @author senu
  */
-public class Utils
+public class MapUtils
 {
 	public final static MapLocation closest(MapLocation[] locations, MapLocation from)
 	{
@@ -33,17 +33,19 @@ public class Utils
 
 	public final static MapLocation randLocRange(MapLocation from, int dx, int dy, Random r)
 	{
-		return Utils.add(from, r.nextInt(2 * dx) - dx, r.nextInt(2 * dy) - dy);
+		return MapUtils.add(from, r.nextInt(2 * dx) - dx, r.nextInt(2 * dy) - dy);
 	}
-	public final static Direction[] movableDirections() {
-		return new Direction[] {
+
+	public final static Direction[] movableDirections()
+	{
+		return new Direction[]{
 					Direction.EAST,
 					Direction.NORTH,
 					Direction.NORTH_EAST, Direction.NORTH_WEST,
 					Direction.SOUTH,
 					Direction.SOUTH_EAST, Direction.SOUTH_WEST,
 					Direction.WEST
-		};
+				};
 
 	}
 }

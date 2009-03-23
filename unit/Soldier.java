@@ -3,6 +3,11 @@ package batman.unit;
 import batman.constants.ByteCodeConstants;
 import batman.messaging.Messages;
 import batman.constants.StrategyConstants;
+import batman.management.executor.SoldierExecutor;
+import batman.messaging.message.HungerMessage;
+import batman.messaging.message.IMessage;
+import batman.messaging.message.OrderMessage;
+import batman.strategy.policy.HungerPolicy;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
@@ -13,6 +18,8 @@ import battlecode.common.RobotController;
  */
 public class Soldier extends Unit
 {
+	protected SoldierExecutor executor = new SoldierExecutor(this);
+
 	public Soldier(RobotController rc)
 	{
 		super(rc);
@@ -29,30 +36,47 @@ public class Soldier extends Unit
 		}
 	}
 
-	private final void handleInts() throws GameActionException
+	protected void onHungry() throws GameActionException
 	{
-		if (health() <= StrategyConstants.SOLDIER_HUNGER_LEVEL) {
+		for (;;) {
+			refreshLocation();
 
-			for (;;) {
-				refreshLocation();
+			yieldIf(ByteCodeConstants.Medium);
+			MapLocation loc = nearestArchon();
 
-				yieldIf(ByteCodeConstants.Medium);
-				MapLocation loc = nearestArchon();
-
-				if (loc != null) {
-					if (inTransferRange(loc)) {
-						rc.broadcast(Messages.hungryMessage(rc));
-						while (health() <= StrategyConstants.SOLDIER_HUNGER_LEVEL) {
-							rc.yield();
-						}
-						return;
-					} else {
-//						debug_print("hungry");
-//							goTo(loc);
+			if (loc != null) {
+				if (inTransferRange(loc)) {
+					rc.broadcast(new HungerMessage(rc).serialize());
+					while (isHungry()) {
+						rc.yield();
 					}
+					return;
+				} else {
+//						debug_print("hungry");
+					goTo(loc); //TODO
 				}
+			}
+		}
+
+	}
+
+	protected void processMessages() throws GameActionException
+	{
+		for (IMessage inMsg : getMessages()) {
+			if (inMsg instanceof OrderMessage) {
+				OrderMessage msg = (OrderMessage) inMsg;
+				msg.order.execute(executor);
 			}
 		}
 	}
 
+
+	protected final void handleInts() throws GameActionException
+	{
+		if (isHungry()) {
+			onHungry();
+		} else {
+			processMessages();
+		}
+	}
 }

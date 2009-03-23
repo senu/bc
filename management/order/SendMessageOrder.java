@@ -45,7 +45,7 @@ public class SendMessageOrder implements Order
 		this.message = message;
 	}
 
-	public void deserialize(Message m, SerializationIterator it)
+	public void deserialize(SerializationIterator it)
 	{
 		throw new UnsupportedOperationException("Not supported yet.");
 	}

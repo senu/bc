@@ -37,12 +37,12 @@ public class Path
 
 	public boolean hasNext()
 	{
-		return currentIdx == path.size() - 1;
+		return currentIdx < path.size();
 	}
 
 	public MapLocation getNext()
 	{
-		return path.get(currentIdx + 1);
+		return path.get(currentIdx++);
 	}
 
 	public MapLocation getCur()
@@ -52,7 +52,7 @@ public class Path
 
 	public MapLocation getPrev()
 	{
-		return path.get(currentIdx - 1);
+		return path.get(currentIdx++);
 	}
 
 	public int getCurrentIdx()

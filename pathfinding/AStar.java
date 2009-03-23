@@ -1,7 +1,7 @@
 package batman.pathfinding;
 
 import batman.utils.DebugUtils;
-import batman.utils.Utils;
+import batman.utils.MapUtils;
 import batman.utils.WeightedMapLocation;
 import battlecode.common.Direction;
 import battlecode.common.MapLocation;
@@ -75,7 +75,7 @@ public class AStar implements IPathFinder
 			//TODOreturn cur;
 			}
 
-			for (Direction dir : Utils.movableDirections()) {
+			for (Direction dir : MapUtils.movableDirections()) {
 
 				MapLocation next = cur.add(dir);
 

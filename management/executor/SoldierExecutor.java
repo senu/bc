@@ -4,6 +4,7 @@ import batman.management.order.PathFindMoveOrder;
 import batman.management.order.SendMessageOrder;
 import batman.management.order.SingleMoveOrder;
 import batman.management.result.ExecutionResult;
+import batman.messaging.message.ChangeRobotPolicyOrder;
 import batman.unit.Soldier;
 import battlecode.common.GameActionException;
 import battlecode.common.RobotController;
@@ -33,6 +34,14 @@ public class SoldierExecutor implements Executor
 
 	public ExecutionResult executePathFindMoveOrder(PathFindMoveOrder order) throws GameActionException
 	{
-		return target.singleMove(order.where);
+		return target.pathFindMove(order.where);
 	}
+
+	public ExecutionResult executeChangeRobotPolicyOrder(ChangeRobotPolicyOrder order) throws GameActionException
+	{
+		target.policy = order.newRobotPolicy;
+		return ExecutionResult.OK;
+	}
+
+
 }

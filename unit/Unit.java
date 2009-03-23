@@ -3,16 +3,18 @@ package batman.unit;
 import batman.constants.ByteCodeConstants;
 import batman.management.result.ExecutionResult;
 import batman.messaging.message.IMessage;
-import batman.messaging.Messages;
 import batman.messaging.message.HungerMessage;
 import batman.messaging.message.MapTransferRequestMessage;
 import batman.messaging.message.MapTransferResponseMessage;
 import batman.messaging.message.MessageImpl;
 import batman.messaging.message.OrderMessage;
 import batman.messaging.message.RequestBlockMessage;
-import batman.utils.Utils;
+import batman.pathfinding.AStar;
+import batman.utils.MapUtils;
 import batman.pathfinding.GameMap;
 import batman.pathfinding.MapTile;
+import batman.pathfinding.Path;
+import batman.strategy.RobotPolicy;
 import batman.utils.SimpleRobotInfo;
 import battlecode.common.Clock;
 import battlecode.common.Direction;
@@ -20,6 +22,7 @@ import battlecode.common.GameActionException;
 import battlecode.common.GameConstants;
 import battlecode.common.MapLocation;
 import battlecode.common.Message;
+import battlecode.common.Robot;
 import battlecode.common.RobotController;
 import battlecode.common.TerrainTile;
 import java.util.ArrayList;
@@ -38,6 +41,7 @@ public abstract class Unit
 	protected Random rand = new Random();
 	protected MapLocation curLoc;
 	protected GameMap map = new GameMap();
+	public RobotPolicy policy = new RobotPolicy();
 
 	//TODO remove
 	class LocStatus
@@ -108,7 +112,7 @@ public abstract class Unit
 
 	protected final MapLocation nearestArchon()
 	{
-		return Utils.closest(rc.senseAlliedArchons(), rc.getLocation());
+		return MapUtils.closest(rc.senseAlliedArchons(), rc.getLocation());
 	}
 
 	protected final boolean inTransferRange(MapLocation loc)
@@ -183,7 +187,7 @@ public abstract class Unit
 			map.setTile(loc, scanLoc(loc));
 		}
 
-//TODO czasem za duzo		debug_print("updateMap took:%d", Clock.getRoundNum() - rstart);
+		debug_print("updateMap took:%d", Clock.getRoundNum() - rstart);
 	}
 
 	protected final MapTile scanLoc(MapLocation loc) throws GameActionException
@@ -205,8 +209,20 @@ public abstract class Unit
 				break;
 		}
 
-		tile.airRobot = new SimpleRobotInfo(rc.senseRobotInfo(rc.senseAirRobotAtLocation(loc)));
-		tile.groundRobot = new SimpleRobotInfo(rc.senseRobotInfo(rc.senseGroundRobotAtLocation(loc)));
+		Robot robot = rc.senseGroundRobotAtLocation(loc);
+		if (robot != null) {
+			tile.airRobot = new SimpleRobotInfo(rc.senseRobotInfo(robot));
+		} else {
+			tile.airRobot = null;
+		}
+
+		robot = rc.senseAirRobotAtLocation(loc);
+		if (robot != null) {
+			tile.groundRobot = new SimpleRobotInfo(rc.senseRobotInfo(robot));
+		} else {
+			tile.groundRobot = null;
+		}
+
 		tile.blockCount = rc.senseNumBlocksAtLocation(loc);
 		tile.height = tt.getHeight();
 
@@ -243,6 +259,75 @@ public abstract class Unit
 
 	}
 
+	protected abstract void handleInts() throws GameActionException;
+
+	public ExecutionResult pathFindMove(MapLocation where) throws GameActionException
+	{
+		debug_print("pathFindMove 1");
+		updateMap();
+
+		AStar astar = new AStar();
+		Path path = astar.findPath(curLoc, where, map, rc.getRobotType());
+
+		path.debug_print(map);
+
+		if (path == Path.emptyPath) {
+			return ExecutionResult.OK;
+		}
+
+		debug_print("pathFindMove 2");
+
+		path.next(); //first loc == curLoc
+
+		for (int i = 0; path.hasNext(); i++) {
+
+			if (i % 5 == 0) {
+				updateMap();
+			}
+
+			handleInts();
+			debug_print("%d at: %s", Clock.getRoundNum(), refreshLocation().toString());
+			map.debug_print();
+			map.debug_print(path);
+
+			MapLocation next = path.getNext();
+			yieldMv();
+
+			Direction nextDir = curLoc.directionTo(next);
+			if (map.hasLoc(next) && map.getTile(next).state != MapTile.LocState.Ground) { //TODO
+				debug_print("newPath");
+				path = astar.findPath(refreshLocation(), where, map, rc.getRobotType());
+				if (path == Path.emptyPath) {
+					return ExecutionResult.OK;
+				}
+				path.next();
+				continue;
+			} else {
+				rc.setDirection(nextDir);
+				rc.yield();
+			}
+
+			if (rc.canMove(rc.getDirection())) {
+				rc.moveForward();
+				rc.yield();
+			} else {
+				debug_print("newPath -- to nie powinno sie czesto zdarzac");
+				path = astar.findPath(refreshLocation(), where, map, rc.getRobotType());
+				if (path == Path.emptyPath) {
+					return ExecutionResult.OK;
+				}
+				path.next();
+				continue;
+
+//				return ExecutionResult.Failed;
+			}
+
+			yieldMv();
+		}
+
+		return ExecutionResult.OK;
+	}
+
 	public ExecutionResult sleep(int howLong)
 	{
 		for (int i = 1; i <= howLong; i++) {
@@ -268,15 +353,12 @@ public abstract class Unit
 			OrderMessage.class,
 			RequestBlockMessage.class,};
 
-
-
 		Map<Integer, Class> messageTypes = new HashMap<Integer, Class>();
 
 		try {
 			for (Class clazz : messageClasses) {
 				messageTypes.put(((MessageImpl) clazz.newInstance()).getMessageType(), clazz);
 			}
-
 
 			for (Message m : msgs) {
 				int type = m.ints[0];
@@ -293,6 +375,10 @@ public abstract class Unit
 
 		return ret;
 
+	}
 
+	protected boolean isHungry()
+	{
+		return health() <= policy.hungerPolicy.hungerLevel;
 	}
 }

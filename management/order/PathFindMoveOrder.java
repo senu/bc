@@ -16,19 +16,27 @@ public class PathFindMoveOrder implements Order
 {
 	public MapLocation where;
 
+	public PathFindMoveOrder(MapLocation where)
+	{
+		this.where = where;
+	}
+
+	public PathFindMoveOrder()
+	{
+	}
+
 	public ExecutionResult execute(Executor executor) throws GameActionException
 	{
 		return executor.executePathFindMoveOrder(this);
 	}
 
-	public void deserialize(Message m, SerializationIterator it)
+	public void deserialize(SerializationIterator it)
 	{
-		where = m.locations[it.li++];
+		where = it.getLoc();
 	}
 
 	public void serialize(MutableMessage m)
 	{
-		m.strings.add(getOrderName());
 		m.locations.add(where);
 	}
 

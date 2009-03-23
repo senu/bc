@@ -31,6 +31,7 @@ public class OrderMessage extends MessageImpl
 	public Message serialize()
 	{
 		MutableMessage msg = serializeStart();
+		msg.strings.add(order.getOrderName());
 		order.serialize(msg);
 		return msg.serialize();
 	}
@@ -39,6 +40,6 @@ public class OrderMessage extends MessageImpl
 	{
 		SerializationIterator it = deserializeStart(msg);
 		order = OrderDispatcher.getOrderByRepresentation(it.getString());
-		order.deserialize(msg, it);
+		order.deserialize(it);
 	}
 }

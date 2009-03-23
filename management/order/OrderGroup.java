@@ -34,7 +34,7 @@ public class OrderGroup implements Order
 		throw new UnsupportedOperationException("Not supported yet.");
 	}
 
-	public void deserialize(Message m, SerializationIterator it)
+	public void deserialize(SerializationIterator it)
 	{
 		throw new UnsupportedOperationException("Not supported yet.");
 	}

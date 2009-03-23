@@ -2,7 +2,8 @@ package batman.unit;
 
 import batman.constants.StrategyConstants;
 import batman.management.order.Order;
-import batman.management.order.SingleMoveOrder;
+import batman.management.order.PathFindMoveOrder;
+import batman.messaging.message.ChangeRobotPolicyOrder;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
@@ -14,7 +15,9 @@ import batman.messaging.message.OrderMessage;
 import batman.messaging.message.RequestBlockMessage;
 import batman.pathfinding.AStar;
 import batman.pathfinding.Path;
-import batman.utils.Utils;
+import batman.strategy.RobotPolicy;
+import batman.strategy.policy.HungerPolicy;
+import batman.utils.MapUtils;
 import battlecode.common.TerrainTile;
 
 /**
@@ -39,12 +42,12 @@ public class Archon extends Unit
 
 
 		for (int i = 0; i < 34; i++) {
-			goTo(Utils.add(refreshLocation(), 30, 30));
+			goTo(MapUtils.add(refreshLocation(), 30, 30));
 			handleInts();
 		}
 
 		for (int i = 0; i < 17; i++) {
-			goTo(Utils.add(refreshLocation(), -10, -10));
+			goTo(MapUtils.add(refreshLocation(), -10, -10));
 			handleInts();
 		}
 
@@ -54,23 +57,28 @@ public class Archon extends Unit
 
 		buildSoldier();
 
-
-
-		Order order = new SingleMoveOrder(Utils.add(refreshLocation(), 5, 5));
-		rc.broadcast(new OrderMessage(order).serialize());
-
-
 		for (;;) {
 			handleInts();
 			rc.yield();
 			if (rand.nextInt(350) == 0) {
 				AStar alg = new AStar();
-				MapLocation to = Utils.randLocRange(curLoc, 30, 30, rand);
+				MapLocation to = MapUtils.randLocRange(curLoc, 30, 30, rand);
 				Path path = alg.findPath(refreshLocation(), to, map, rc.getRobotType());
 
-				debug_print("%d %d ----> %d %d", curLoc.getX(), curLoc.getY(), to.getX(), to.getY());
-				map.debug_print();
-				map.debug_print(path);
+//				debug_print("%d %d ----> %d %d", curLoc.getX(), curLoc.getY(), to.getX(), to.getY());
+				//map.debug_print();
+				//map.debug_print(path);
+			}
+
+			if (rand.nextInt(40) == 0) {
+				RobotPolicy rp = new RobotPolicy();
+				rp.hungerPolicy=HungerPolicy.HungryAt35;
+				Order order = new ChangeRobotPolicyOrder(rp);
+				rc.broadcast(new OrderMessage(order).serialize());
+
+				rc.yield();
+				order = new PathFindMoveOrder(MapUtils.add(refreshLocation(), 15, 15));
+				rc.broadcast(new OrderMessage(order).serialize());
 			}
 		}
 
@@ -177,7 +185,7 @@ public class Archon extends Unit
 		}
 	}
 
-	private final void handleInts() throws GameActionException
+	protected final void handleInts() throws GameActionException
 	{
 		for (IMessage msg : getMessages()) {
 			if (msg instanceof HungerMessage) { //TODO

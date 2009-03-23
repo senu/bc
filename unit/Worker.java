@@ -5,7 +5,7 @@ import batman.constants.StrategyConstants;
 import batman.messaging.Messages;
 import batman.messaging.message.IMessage;
 import batman.messaging.message.RequestBlockMessage;
-import batman.utils.Utils;
+import batman.utils.MapUtils;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
@@ -35,7 +35,7 @@ public class Worker extends Unit
 		}
 	}
 
-	private final void handleInts() throws GameActionException
+	protected final void handleInts() throws GameActionException
 	{
 		refreshLocation();
 
@@ -115,7 +115,7 @@ public class Worker extends Unit
 	private final void goRandom(int howFar) throws GameActionException
 	{
 		rc.setIndicatorString(1, "go_rand");
-		MapLocation floc = Utils.randLocRange(rc.getLocation(), howFar, howFar, rand);
+		MapLocation floc = MapUtils.randLocRange(rc.getLocation(), howFar, howFar, rand);
 		for (int i = 1; i <= 30; i++) {
 			goTo(floc);
 			handleInts();
@@ -142,7 +142,7 @@ public class Worker extends Unit
 		blocks = goodBlocks.toArray(new MapLocation[0]);
 
 		if (blocks.length > 0) {
-			MapLocation floc = Utils.closest(blocks, curLoc);
+			MapLocation floc = MapUtils.closest(blocks, curLoc);
 			for (int i = 1; i <= 20; i++) { //go
 
 				if (rc.getLocation().distanceSquaredTo(floc) == 1) {
@@ -165,7 +165,7 @@ public class Worker extends Unit
 				rc.yield();
 				return true;
 			} else {
-				for (Direction dir : Utils.movableDirections()) {
+				for (Direction dir : MapUtils.movableDirections()) {
 					yieldMv();
 					rc.setDirection(dir);
 					rc.yield();
