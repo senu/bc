@@ -1,5 +1,6 @@
 package batman.management.executor;
 
+import batman.management.order.OrderGroup;
 import batman.management.order.PathFindMoveOrder;
 import batman.management.order.SendMessageOrder;
 import batman.management.order.SingleMoveOrder;
@@ -43,5 +44,8 @@ public class SoldierExecutor implements Executor
 		return ExecutionResult.OK;
 	}
 
-
+	public ExecutionResult executeOrderGroup(OrderGroup order) throws GameActionException
+	{
+		throw new UnsupportedOperationException("Not supported yet.");
+	}
 }

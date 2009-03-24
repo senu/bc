@@ -4,7 +4,10 @@ import batman.management.executor.Executor;
 import batman.management.result.ExecutionResult;
 import batman.messaging.serialization.MutableMessage;
 import batman.messaging.serialization.SerializationIterator;
+import battlecode.common.GameActionException;
 import battlecode.common.Message;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * O1;O2;O3...
@@ -12,26 +15,16 @@ import battlecode.common.Message;
  */
 public class OrderGroup implements Order
 {
+	List<Order> orders = new ArrayList<Order>();
 
-
-	public ExecutionResult execute(Executor executor)
+	public ExecutionResult execute(Executor executor) throws GameActionException
 	{
-		throw new UnsupportedOperationException("Not supported yet.");
+		return executor.executeOrderGroup(this);
 	}
 
 	public String getOrderName()
 	{
 		return this.getClass().getSimpleName();
-	}
-
-	public void deserialize(Message msg)
-	{
-		throw new UnsupportedOperationException("Not supported yet.");
-	}
-
-	public Message serialize()
-	{
-		throw new UnsupportedOperationException("Not supported yet.");
 	}
 
 	public void deserialize(SerializationIterator it)
@@ -43,6 +36,4 @@ public class OrderGroup implements Order
 	{
 		throw new UnsupportedOperationException("Not supported yet.");
 	}
-
-
 }
