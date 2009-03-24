@@ -43,6 +43,7 @@ public class ChangeRobotPolicyOrder implements Order
 
 	public void serialize(MutableMessage m)
 	{
+		m.strings.add(getOrderName());
 		newRobotPolicy.serialize(m);
 	}
 }

@@ -3,13 +3,13 @@ package batman.management.order;
 import batman.management.executor.Executor;
 import batman.management.result.ExecutionResult;
 import batman.messaging.message.IMessage;
+import batman.messaging.serialization.MessageDispatcher;
 import batman.messaging.serialization.MutableMessage;
 import batman.messaging.serialization.SerializationIterator;
 import battlecode.common.GameActionException;
-import battlecode.common.Message;
 
 /**
- *
+ * TODO nie dziala!
  * @author senu
  */
 public class SendMessageOrder implements Order
@@ -47,11 +47,13 @@ public class SendMessageOrder implements Order
 
 	public void deserialize(SerializationIterator it)
 	{
-		throw new UnsupportedOperationException("Not supported yet.");
+		message = MessageDispatcher.getMessageByRepresentation(it.getString());
+		message.deserialize(it);
 	}
 
 	public void serialize(MutableMessage m)
 	{
-		throw new UnsupportedOperationException("Not supported yet.");
+		m.strings.add(getOrderName());
+		message.serialize(m);
 	}
 }

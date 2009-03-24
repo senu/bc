@@ -4,6 +4,8 @@ import batman.constants.StrategyConstants;
 import batman.management.order.Order;
 import batman.management.order.PathFindMoveOrder;
 import batman.management.order.ChangeRobotPolicyOrder;
+import batman.management.order.OrderGroup;
+import batman.management.order.SendMessageOrder;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
@@ -11,6 +13,7 @@ import battlecode.common.RobotController;
 import battlecode.common.RobotType;
 import batman.messaging.message.HungerMessage;
 import batman.messaging.message.IMessage;
+import batman.messaging.message.MapTransferRequestMessage;
 import batman.messaging.message.OrderMessage;
 import batman.messaging.message.RequestBlockMessage;
 import batman.pathfinding.AStar;
@@ -66,19 +69,23 @@ public class Archon extends Unit
 				Path path = alg.findPath(refreshLocation(), to, map, rc.getRobotType());
 
 //				debug_print("%d %d ----> %d %d", curLoc.getX(), curLoc.getY(), to.getX(), to.getY());
-				//map.debug_print();
-				//map.debug_print(path);
+			//map.debug_print();
+			//map.debug_print(path);
 			}
 
 			if (rand.nextInt(40) == 0) {
 				RobotPolicy rp = new RobotPolicy();
-				rp.hungerPolicy=HungerPolicy.HungryAt35;
-				Order order = new ChangeRobotPolicyOrder(rp);
-				rc.broadcast(new OrderMessage(order).finalSerialize());
+				rp.hungerPolicy = HungerPolicy.DieStarving;
+				Order order1 = new ChangeRobotPolicyOrder(rp);
+				Order order2 = new PathFindMoveOrder(MapUtils.add(refreshLocation(), 5, 0));
+				Order order3 = new PathFindMoveOrder(MapUtils.add(curLoc, 5, 5));
 
-				rc.yield();
-				order = new PathFindMoveOrder(MapUtils.add(refreshLocation(), 15, 15));
-				rc.broadcast(new OrderMessage(order).finalSerialize());
+				OrderGroup group = new OrderGroup();
+				group.orders.add(order1);
+				group.orders.add(order2);
+				group.orders.add(order3);
+
+				rc.broadcast(new OrderMessage(group).finalSerialize());
 			}
 		}
 

@@ -6,7 +6,6 @@ import batman.messaging.serialization.MutableMessage;
 import batman.messaging.serialization.SerializationIterator;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
-import battlecode.common.Message;
 
 /**
  *

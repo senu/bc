@@ -14,6 +14,7 @@ import batman.utils.SmartList;
  */
 public class OrderList extends SmartList<Order>
 {
+	public static final long serialVersionUID = 1L;
 
 	public OrderList(int arg0)
 	{
@@ -23,7 +24,6 @@ public class OrderList extends SmartList<Order>
 	public OrderList()
 	{
 	}
-
 
 	public void deserialize(SerializationIterator it)
 	{

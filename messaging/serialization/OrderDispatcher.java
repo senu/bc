@@ -28,6 +28,7 @@ public class OrderDispatcher
 			return new OrderGroup();
 		}
 
+		System.out.println("zla nazawa: " + name);
 		return null;
 	}
 }

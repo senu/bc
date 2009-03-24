@@ -35,6 +35,7 @@ public abstract class MessageImpl implements IMessage
 	public final Message finalSerialize()
 	{
 		MutableMessage m = new MutableMessage();
+//		m.strings.add(this.getClass().getName());
 		m.ints.add(getMessageType());
 		m.ints.add(round);
 		m.ints.add(priority);
