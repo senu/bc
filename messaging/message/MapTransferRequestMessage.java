@@ -30,21 +30,15 @@ public class MapTransferRequestMessage extends MessageImpl
 		this.minRound = minRound;
 	}
 
-	public Message serialize()
+	public void serialize(MutableMessage m)
 	{
-		MutableMessage m = serializeStart();
-
 		m.ints.add(minRound);
 		m.locations.add(minLoc);
 		m.locations.add(maxLoc);
-
-		return m.serialize();
-
 	}
 
-	public void deserialize(Message msg)
+	public void deserialize(SerializationIterator it)
 	{
-		SerializationIterator it = deserializeStart(msg);
 		minRound = it.getInt();
 		minLoc = it.getLoc();
 		maxLoc = it.getLoc();

@@ -1,4 +1,4 @@
-package batman.messaging.message;
+package batman.management.order;
 
 import batman.management.executor.Executor;
 import batman.management.order.Order;

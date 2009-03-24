@@ -31,9 +31,8 @@ public class MapTransferResponseMessage extends MessageImpl
 		return 5;
 	}
 
-	public Message serialize()
+	public void serialize(MutableMessage m)
 	{
-		MutableMessage m = serializeStart();
 
 		m.ints.add(tiles.size());
 		m.ints.add(locs.size());
@@ -61,13 +60,11 @@ public class MapTransferResponseMessage extends MessageImpl
 			}
 		}
 
-		return m.serialize();
 
 	}
 
-	public void deserialize(Message msg)
+	public void deserialize(SerializationIterator it)
 	{
-		SerializationIterator it = deserializeStart(msg);
 
 		int tilesN = it.getInt();
 		int locsN = it.getInt();

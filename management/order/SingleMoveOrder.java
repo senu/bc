@@ -42,6 +42,7 @@ public class SingleMoveOrder implements Order
 
 	public void serialize(MutableMessage m)
 	{
+		m.strings.add(getOrderName());
 		m.locations.add(where);
 	}
 }

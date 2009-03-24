@@ -4,7 +4,6 @@ import batman.management.order.Order;
 import batman.messaging.serialization.MutableMessage;
 import batman.messaging.serialization.OrderDispatcher;
 import batman.messaging.serialization.SerializationIterator;
-import battlecode.common.Message;
 
 /**
  *
@@ -28,17 +27,13 @@ public class OrderMessage extends MessageImpl
 		return 6;
 	}
 
-	public Message serialize()
+	public void serialize(MutableMessage msg)
 	{
-		MutableMessage msg = serializeStart();
-		msg.strings.add(order.getOrderName());
 		order.serialize(msg);
-		return msg.serialize();
 	}
 
-	public void deserialize(Message msg)
+	public void deserialize(SerializationIterator it)
 	{
-		SerializationIterator it = deserializeStart(msg);
 		order = OrderDispatcher.getOrderByRepresentation(it.getString());
 		order.deserialize(it);
 	}

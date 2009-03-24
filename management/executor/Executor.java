@@ -5,7 +5,7 @@ import batman.management.order.PathFindMoveOrder;
 import batman.management.order.SendMessageOrder;
 import batman.management.order.SingleMoveOrder;
 import batman.management.result.ExecutionResult;
-import batman.messaging.message.ChangeRobotPolicyOrder;
+import batman.management.order.ChangeRobotPolicyOrder;
 import batman.strategy.RobotPolicy;
 import battlecode.common.GameActionException;
 

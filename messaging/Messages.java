@@ -23,7 +23,7 @@ public class Messages
 
 	public static Message hungryMessage(RobotController who)
 	{
-		return new HungerMessage(who).serialize();
+		return new HungerMessage(who).finalSerialize();
 	}
 
 	public static Message newSimpleMessage(int type)

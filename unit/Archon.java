@@ -3,7 +3,7 @@ package batman.unit;
 import batman.constants.StrategyConstants;
 import batman.management.order.Order;
 import batman.management.order.PathFindMoveOrder;
-import batman.messaging.message.ChangeRobotPolicyOrder;
+import batman.management.order.ChangeRobotPolicyOrder;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
@@ -74,11 +74,11 @@ public class Archon extends Unit
 				RobotPolicy rp = new RobotPolicy();
 				rp.hungerPolicy=HungerPolicy.HungryAt35;
 				Order order = new ChangeRobotPolicyOrder(rp);
-				rc.broadcast(new OrderMessage(order).serialize());
+				rc.broadcast(new OrderMessage(order).finalSerialize());
 
 				rc.yield();
 				order = new PathFindMoveOrder(MapUtils.add(refreshLocation(), 15, 15));
-				rc.broadcast(new OrderMessage(order).serialize());
+				rc.broadcast(new OrderMessage(order).finalSerialize());
 			}
 		}
 
@@ -170,7 +170,7 @@ public class Archon extends Unit
 
 	private final void requestBlock(int howFar) throws GameActionException
 	{
-		rc.broadcast(new RequestBlockMessage(howFar, refreshLocation()).serialize());
+		rc.broadcast(new RequestBlockMessage(howFar, refreshLocation()).finalSerialize());
 	}
 
 	private void buildSoldier() throws GameActionException

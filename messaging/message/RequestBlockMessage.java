@@ -31,20 +31,14 @@ public class RequestBlockMessage extends MessageImpl
 		return 2;
 	}
 
-	public Message serialize()
+	public void serialize(MutableMessage m)
 	{
-		MutableMessage m = serializeStart();
-
 		m.ints.add(howFar);
 		m.locations.add(whereToUnload);
-
-		return m.serialize();
-
 	}
 
-	public void deserialize(Message msg)
+	public void deserialize(SerializationIterator it)
 	{
-		SerializationIterator it = deserializeStart(msg);
 		howFar = it.getInt();
 		whereToUnload = it.getLoc();
 	}

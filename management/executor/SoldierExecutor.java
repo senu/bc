@@ -1,14 +1,14 @@
 package batman.management.executor;
 
+import batman.management.order.Order;
 import batman.management.order.OrderGroup;
 import batman.management.order.PathFindMoveOrder;
 import batman.management.order.SendMessageOrder;
 import batman.management.order.SingleMoveOrder;
 import batman.management.result.ExecutionResult;
-import batman.messaging.message.ChangeRobotPolicyOrder;
+import batman.management.order.ChangeRobotPolicyOrder;
 import batman.unit.Soldier;
 import battlecode.common.GameActionException;
-import battlecode.common.RobotController;
 
 /**
  *
@@ -46,6 +46,12 @@ public class SoldierExecutor implements Executor
 
 	public ExecutionResult executeOrderGroup(OrderGroup order) throws GameActionException
 	{
-		throw new UnsupportedOperationException("Not supported yet.");
+		ExecutionResult res = ExecutionResult.OK;
+
+		for (Order corder : order.orders) {
+			res = corder.execute(this);
+		}
+
+		return res;
 	}
 }

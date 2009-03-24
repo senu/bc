@@ -363,7 +363,7 @@ public abstract class Unit
 			for (Message m : msgs) {
 				int type = m.ints[0];
 				IMessage newMsg = ((IMessage) messageTypes.get(type).newInstance());
-				newMsg.deserialize(m);
+				newMsg.finalDeserialize(m);
 				ret.add(newMsg);
 			}
 

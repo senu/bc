@@ -5,7 +5,7 @@ import batman.management.order.OrderGroup;
 import batman.management.order.PathFindMoveOrder;
 import batman.management.order.SendMessageOrder;
 import batman.management.order.SingleMoveOrder;
-import batman.messaging.message.ChangeRobotPolicyOrder;
+import batman.management.order.ChangeRobotPolicyOrder;
 
 /**
  *

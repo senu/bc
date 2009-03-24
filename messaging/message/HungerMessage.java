@@ -34,21 +34,16 @@ public class HungerMessage extends MessageImpl
 		where = who.getLocation();
 	}
 
-	public Message serialize()
+	public void serialize(MutableMessage m)
 	{
-		MutableMessage m = serializeStart();
-
 		m.ints.add(rl.ordinal());
 		m.ints.add(howMuch);
 
 		m.locations.add(where);
-
-		return m.serialize();
 	}
 
-	public void deserialize(Message m)
+	public void deserialize(SerializationIterator it)
 	{
-		SerializationIterator it = deserializeStart(m);
 		rl = RobotLevel.values()[it.getInt()];
 		howMuch = it.getInt();
 		where = it.getLoc();

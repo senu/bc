@@ -46,7 +46,7 @@ public class Soldier extends Unit
 
 			if (loc != null) {
 				if (inTransferRange(loc)) {
-					rc.broadcast(new HungerMessage(rc).serialize());
+					rc.broadcast(new HungerMessage(rc).finalSerialize());
 					while (isHungry()) {
 						rc.yield();
 					}
