@@ -37,7 +37,7 @@ public class WorkerExecutor implements Executor
 
 	public ExecutionResult executePathFindMoveOrder(PathFindMoveOrder order) throws GameActionException
 	{
-		return ExecutionResult.Failed;
+		return target.pathFindMove(order.where);
 	}
 
 	public ExecutionResult executeSendMessageOrder(SendMessageOrder order) throws GameActionException
@@ -52,7 +52,7 @@ public class WorkerExecutor implements Executor
 
 	public ExecutionResult executeBeMedicOrder(BeMedicOrder order) throws GameActionException
 	{
-		target.policy.hungerPolicy = HungerPolicy.HungryAt50;
+		target.policy.hungerPolicy = HungerPolicy.HungryAt35;
 		target.workerPolicy = WorkerPolicy.BeMedic;
 		return ExecutionResult.OK;
 	}

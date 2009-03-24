@@ -1,5 +1,6 @@
 package batman.messaging.message;
 
+import batman.messaging.Recipient;
 import batman.messaging.serialization.MutableMessage;
 import batman.messaging.serialization.SerializationIterator;
 import battlecode.common.Message;
@@ -12,6 +13,7 @@ public abstract class MessageImpl implements IMessage
 {
 	public int round;
 	public int priority;
+	public Recipient recipient = Recipient.All;
 
 	public int getPriority()
 	{
@@ -23,12 +25,18 @@ public abstract class MessageImpl implements IMessage
 		return round;
 	}
 
+	public Recipient getRecipient()
+	{
+		return recipient;
+	}
+
 	public final void finalDeserialize(Message msg)
 	{
 		round = msg.ints[1];
 		priority = msg.ints[2];
+		recipient = Recipient.values()[msg.ints[3]];
 
-		deserialize(new SerializationIterator(msg, 3, 0, 0));
+		deserialize(new SerializationIterator(msg, 4, 0, 0));
 
 	}
 
@@ -39,6 +47,7 @@ public abstract class MessageImpl implements IMessage
 		m.ints.add(getMessageType());
 		m.ints.add(round);
 		m.ints.add(priority);
+		m.ints.add(recipient.ordinal());
 
 		serialize(m);
 		return m.serialize();

@@ -17,6 +17,8 @@ import battlecode.common.RobotInfo;
 import battlecode.common.RobotLevel;
 import battlecode.common.RobotType;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -49,9 +51,20 @@ public class Worker extends Unit
 
 	protected void beMedic() throws GameActionException
 	{
-		yieldMediumBC();
+		yieldSmallBC();
+//		debug_print("beMedic");
 		rc.setIndicatorString(0, "beMedic");
-		for (RobotInfo ri : getAlliedGroundUnits()) {
+		List<RobotInfo> allies = getAlliedGroundUnits();
+		Collections.sort(allies, new Comparator<RobotInfo>()
+		{
+			MapLocation from = refreshLocation();
+
+			public int compare(RobotInfo o1, RobotInfo o2)
+			{
+				return Integer.valueOf(from.distanceSquaredTo(o1.location)).compareTo(from.distanceSquaredTo(o2.location));
+			}
+		});
+		for (RobotInfo ri : allies) {
 			if (ri.type == RobotType.WORKER) {
 				if ((ri.eventualEnergon / ri.maxEnergon) < 0.3) {
 					heal(ri);
@@ -106,7 +119,9 @@ public class Worker extends Unit
 				if (msg instanceof RequestBlockMessage && blockGoal == null) {
 					onRequestBlock((RequestBlockMessage) msg);
 				} else if (msg instanceof OrderMessage) {
+					rc.setIndicatorString(0, "execute - start");
 					((OrderMessage) msg).order.execute(executor);
+					rc.setIndicatorString(0, "execute - end");
 				}
 			}
 

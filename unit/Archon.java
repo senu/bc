@@ -80,7 +80,7 @@ public class Archon extends Unit
 			//map.debug_print(path);
 			}
 
-			if (rand.nextInt(40) == 0) {
+			if (rand.nextInt(120) == 0) {
 				RobotPolicy rp = new RobotPolicy();
 				rp.hungerPolicy = HungerPolicy.HungryAt35;
 				Order order1 = new ChangeRobotPolicyOrder(rp);
@@ -93,6 +93,8 @@ public class Archon extends Unit
 				group.orders.add(order3);
 
 				rc.broadcast(new OrderMessage(group).finalSerialize());
+				rc.yield();
+				rc.broadcast(new OrderMessage(new PathFindMoveOrder(MapUtils.add(refreshLocation(), 5, 0))).finalSerialize());
 			}
 		}
 

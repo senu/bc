@@ -3,6 +3,7 @@ package batman.pathfinding;
 import batman.utils.DebugUtils;
 import batman.utils.MapUtils;
 import batman.utils.WeightedMapLocation;
+import battlecode.common.Clock;
 import battlecode.common.Direction;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotType;
@@ -41,8 +42,9 @@ public class AStar implements IPathFinder
 
 		int count = 0;
 
-		while (!queue.isEmpty() && count < 200) {
+		while (!queue.isEmpty() && count < 40) {
 			count++; //TODO
+//			DebugUtils.debug_print("astar bc1: %d", Clock.getBytecodeNum());
 			WeightedMapLocation wcur = queue.remove();
 
 			cur = wcur.x;
@@ -57,6 +59,7 @@ public class AStar implements IPathFinder
 			byl.add(cur);
 
 
+//			DebugUtils.debug_print("astar bc2: %d", Clock.getBytecodeNum());
 			if (cur.equals(to)) {
 				Path path = new Path();
 				MapLocation parent = parents.get(cur);
@@ -72,20 +75,20 @@ public class AStar implements IPathFinder
 
 				java.util.Collections.reverse(path.getPath());
 
-//				rc.setIndicatorString(0, from.toString());
-//				rc.setIndicatorString(2, to.toString());
 //				DebugUtils.debug_print("astar end");
 				return path;
-			//TODOreturn cur;
 			}
 
 			for (Direction dir : MapUtils.movableDirections()) {
 
+//				DebugUtils.debug_print("astar bc3: %d", Clock.getBytecodeNum());
 				MapLocation next = cur.add(dir);
+//				DebugUtils.debug_print("astar bc3b: %d", Clock.getBytecodeNum());
 
 				if (byl.contains(next)) {
 					continue;
 				}
+			//	DebugUtils.debug_print("astar bc3c: %d", Clock.getBytecodeNum());
 
 				int ndcost = dcost + 1;
 				int nhcost = Math.abs(to.getX() - next.getX()) + Math.abs(to.getY() - next.getY());

@@ -269,11 +269,24 @@ public abstract class Unit
 	public ExecutionResult pathFindMove(MapLocation where) throws GameActionException
 	{
 		rc.setIndicatorString(0, "pathFindMove");
+
+/*		try {
+			if (rc.getRobotType() == RobotType.WORKER) {
+				throw new ArithmeticException();
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+ */
 //		debug_print("path find move");
 		updateMap();
 
 		AStar astar = new AStar();
+		int rstart = Clock.getRoundNum();
+		rc.setIndicatorString(2, "Astar");
 		Path path = astar.findPath(curLoc, where, map, rc.getRobotType());
+		rc.setIndicatorString(2, "");
+		debug_print("astar took:%d", Clock.getRoundNum() - rstart);
 
 //		debug_print("path find move 0.6");
 
@@ -338,8 +351,8 @@ public abstract class Unit
 //				return ExecutionResult.Failed;
 			}
 
-			yieldMv();
 			handleInts();
+			yieldMv();
 		}
 
 		return ExecutionResult.OK;
