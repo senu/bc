@@ -1,5 +1,6 @@
 package batman.messaging.serialization;
 
+import batman.management.order.BeMedicOrder;
 import batman.management.order.Order;
 import batman.management.order.OrderGroup;
 import batman.management.order.PathFindMoveOrder;
@@ -26,6 +27,8 @@ public class OrderDispatcher
 			return new SendMessageOrder();
 		} else if (name.equals("OrderGroup")) {
 			return new OrderGroup();
+		} else if (name.equals("BeMedicOrder")) {
+			return new BeMedicOrder();
 		}
 
 		System.out.println("zla nazawa: " + name);

@@ -1,5 +1,6 @@
 package batman.management.executor;
 
+import batman.management.order.BeMedicOrder;
 import batman.management.order.Order;
 import batman.management.order.OrderGroup;
 import batman.management.order.PathFindMoveOrder;
@@ -53,5 +54,10 @@ public class SoldierExecutor implements Executor
 		}
 
 		return res;
+	}
+
+	public ExecutionResult executeBeMedicOrder(BeMedicOrder order) throws GameActionException
+	{
+		return ExecutionResult.Failed;
 	}
 }

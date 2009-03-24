@@ -24,6 +24,9 @@ import battlecode.common.MapLocation;
 import battlecode.common.Message;
 import battlecode.common.Robot;
 import battlecode.common.RobotController;
+import battlecode.common.RobotInfo;
+import battlecode.common.RobotType;
+import battlecode.common.Team;
 import battlecode.common.TerrainTile;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -41,6 +44,7 @@ public abstract class Unit
 	protected Random rand = new Random();
 	protected MapLocation curLoc;
 	protected GameMap map = new GameMap();
+	protected Team myTeam;
 	public RobotPolicy policy = new RobotPolicy();
 
 	//TODO remove
@@ -55,6 +59,7 @@ public abstract class Unit
 	{
 		this.rc = rc;
 		this.rand.setSeed(rc.getRobot().getID());
+		this.myTeam = rc.getTeam();
 	}
 
 	public abstract void beYourself() throws GameActionException;
@@ -187,7 +192,7 @@ public abstract class Unit
 			map.setTile(loc, scanLoc(loc));
 		}
 
-		debug_print("updateMap took:%d", Clock.getRoundNum() - rstart);
+//		debug_print("updateMap took:%d", Clock.getRoundNum() - rstart);
 	}
 
 	protected final MapTile scanLoc(MapLocation loc) throws GameActionException
@@ -263,19 +268,29 @@ public abstract class Unit
 
 	public ExecutionResult pathFindMove(MapLocation where) throws GameActionException
 	{
-		debug_print("pathFindMove 1");
+		rc.setIndicatorString(0, "pathFindMove");
+//		debug_print("path find move");
 		updateMap();
 
 		AStar astar = new AStar();
 		Path path = astar.findPath(curLoc, where, map, rc.getRobotType());
 
-		path.debug_print(map);
+//		debug_print("path find move 0.6");
 
 		if (path == Path.emptyPath) {
+			if (!where.equals(refreshLocation())) {
+				return ExecutionResult.Failed;
+			}
 			return ExecutionResult.OK;
+
 		}
 
-		debug_print("pathFindMove 2");
+//		debug_print("path find move 2");
+		path.debug_print(map);
+		if (rc.getRobotType() == RobotType.SOLDIER) {
+			map.debug_print();
+			map.debug_print(path);
+		}
 
 		path.next(); //first loc == curLoc
 
@@ -285,10 +300,11 @@ public abstract class Unit
 				updateMap();
 			}
 
-			handleInts();
-			debug_print("%d at: %s", Clock.getRoundNum(), refreshLocation().toString());
-			map.debug_print();
-			map.debug_print(path);
+//			debug_print("%d at: %s", Clock.getRoundNum(), refreshLocation().toString());
+			if (rc.getRobotType() == RobotType.SOLDIER) {
+				map.debug_print();
+				map.debug_print(path);
+			}
 
 			MapLocation next = path.getNext();
 			yieldMv();
@@ -314,7 +330,7 @@ public abstract class Unit
 				debug_print("newPath -- to nie powinno sie czesto zdarzac");
 				path = astar.findPath(refreshLocation(), where, map, rc.getRobotType());
 				if (path == Path.emptyPath) {
-					return ExecutionResult.OK;
+					return ExecutionResult.Failed;
 				}
 				path.next();
 				continue;
@@ -323,6 +339,7 @@ public abstract class Unit
 			}
 
 			yieldMv();
+			handleInts();
 		}
 
 		return ExecutionResult.OK;
@@ -330,6 +347,7 @@ public abstract class Unit
 
 	public ExecutionResult sleep(int howLong)
 	{
+		rc.setIndicatorString(0, "sleep");
 		for (int i = 1; i <= howLong; i++) {
 			rc.yield();
 		}
@@ -380,5 +398,19 @@ public abstract class Unit
 	protected boolean isHungry()
 	{
 		return health() <= policy.hungerPolicy.hungerLevel;
+	}
+
+	protected List<RobotInfo> getAlliedGroundUnits() throws GameActionException
+	{
+		ArrayList<RobotInfo> ret = new ArrayList<RobotInfo>(10);
+		for (Robot robot : rc.senseNearbyGroundRobots()) {
+			RobotInfo ri = rc.senseRobotInfo(robot);
+			if (ri.team == myTeam) {
+				ret.add(ri);
+			}
+
+		}
+
+		return ret;
 	}
 }

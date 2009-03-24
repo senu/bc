@@ -1,6 +1,7 @@
 package batman.unit;
 
 import batman.constants.StrategyConstants;
+import batman.management.order.BeMedicOrder;
 import batman.management.order.Order;
 import batman.management.order.PathFindMoveOrder;
 import batman.management.order.ChangeRobotPolicyOrder;
@@ -58,6 +59,12 @@ public class Archon extends Unit
 
 		yieldMv();
 
+		buildWorker();
+		buildWorker();
+		buildWorker();
+
+		rc.broadcast(new OrderMessage(new BeMedicOrder()).finalSerialize());
+
 		buildSoldier();
 
 		for (;;) {
@@ -75,7 +82,7 @@ public class Archon extends Unit
 
 			if (rand.nextInt(40) == 0) {
 				RobotPolicy rp = new RobotPolicy();
-				rp.hungerPolicy = HungerPolicy.DieStarving;
+				rp.hungerPolicy = HungerPolicy.HungryAt35;
 				Order order1 = new ChangeRobotPolicyOrder(rp);
 				Order order2 = new PathFindMoveOrder(MapUtils.add(refreshLocation(), 5, 0));
 				Order order3 = new PathFindMoveOrder(MapUtils.add(curLoc, 5, 5));
@@ -158,38 +165,47 @@ public class Archon extends Unit
 		}
 	}
 
-	private final void buildWorker() throws GameActionException
+	protected void buildUnit(RobotType type)
 	{
 		try {
-			while (rc.senseGroundRobotAtLocation(rc.getLocation().add(rc.getDirection())) != null) {
-				rc.setDirection(rc.getDirection().rotateRight());
+			while (!hasEnergon(type.spawnCost())) {
+				handleInts();
+			}
+
+			int i = 0;
+			while (rc.senseGroundRobotAtLocation(frontLoc()) != null || rc.senseTerrainTile(frontLoc()).getType() != TerrainTile.TerrainType.LAND) {
+				rc.setDirection(rc.getDirection().rotateLeft());
+				rc.yield();
+				i++;
+				if (i > 7) {
+					break;
+				}
+			}
+
+			if (rc.senseGroundRobotAtLocation(frontLoc()) == null && rc.senseTerrainTile(frontLoc()).getType() == TerrainTile.TerrainType.LAND) {
+				rc.spawn(type);
 				rc.yield();
 			}
-			if (rc.senseGroundRobotAtLocation(rc.getLocation().add(rc.getDirection())) == null) {
-				rc.spawn(RobotType.WORKER);
-				rc.yield();
-			}
+
 		} catch (Exception e) {
-			debug_print("spawn worker, exn");
+			debug_print("spawn unit, exn" + type.toString());
 			e.printStackTrace();
 		}
+	}
+
+	private void buildSoldier() throws GameActionException
+	{
+		buildUnit(RobotType.SOLDIER);
+	}
+
+	private final void buildWorker() throws GameActionException
+	{
+		buildUnit(RobotType.WORKER);
 	}
 
 	private final void requestBlock(int howFar) throws GameActionException
 	{
 		rc.broadcast(new RequestBlockMessage(howFar, refreshLocation()).finalSerialize());
-	}
-
-	private void buildSoldier() throws GameActionException
-	{
-		while (!hasEnergon(RobotType.SOLDIER.spawnCost())) {
-			handleInts();
-		}
-
-		if (rc.senseGroundRobotAtLocation(frontLoc()) == null && rc.senseTerrainTile(frontLoc()).getType() == TerrainTile.TerrainType.LAND) {
-			rc.spawn(RobotType.SOLDIER);
-			rc.yield();
-		}
 	}
 
 	protected final void handleInts() throws GameActionException
@@ -214,6 +230,7 @@ public class Archon extends Unit
 	{
 		MapLocation loc = msg.where;
 		refreshLocation();
+
 		if (loc.equals(curLoc) || loc.isAdjacentTo(curLoc)) {
 			if (rc.senseGroundRobotAtLocation(loc) != null) { //TODO
 				int howMuch = msg.howMuch;

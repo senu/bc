@@ -2,14 +2,20 @@ package batman.unit;
 
 import batman.constants.ByteCodeConstants;
 import batman.constants.StrategyConstants;
+import batman.management.executor.WorkerExecutor;
 import batman.messaging.Messages;
 import batman.messaging.message.IMessage;
+import batman.messaging.message.OrderMessage;
 import batman.messaging.message.RequestBlockMessage;
+import batman.strategy.policy.custom.WorkerPolicy;
 import batman.utils.MapUtils;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
+import battlecode.common.RobotInfo;
+import battlecode.common.RobotLevel;
+import battlecode.common.RobotType;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,6 +26,8 @@ import java.util.List;
 public class Worker extends Unit
 {
 	private MapLocation blockGoal = null;
+	protected WorkerExecutor executor = new WorkerExecutor(this);
+	public WorkerPolicy workerPolicy = WorkerPolicy.DoNothing;
 
 	public Worker(RobotController rc)
 	{
@@ -32,16 +40,49 @@ public class Worker extends Unit
 		blockGoal = null;
 		for (;;) {
 			handleInts();
+
+			if (workerPolicy == WorkerPolicy.BeMedic) {
+				beMedic();
+			}
+		}
+	}
+
+	protected void beMedic() throws GameActionException
+	{
+		yieldMediumBC();
+		rc.setIndicatorString(0, "beMedic");
+		for (RobotInfo ri : getAlliedGroundUnits()) {
+			if (ri.type == RobotType.WORKER) {
+				if ((ri.eventualEnergon / ri.maxEnergon) < 0.3) {
+					heal(ri);
+					return; //
+				}
+			} else if ((ri.eventualEnergon / ri.maxEnergon) < 0.5) {
+				heal(ri);
+				return; //
+			}
+		}
+	}
+
+	protected void heal(RobotInfo ri) throws GameActionException
+	{
+		rc.setIndicatorString(0, "heal");
+		if (inTransferRange(ri.location) && rc.senseGroundRobotAtLocation(ri.location) != null) { //TODO
+			rc.transferEnergon(rc.getEnergonLevel() / 3, ri.location, RobotLevel.ON_GROUND); //TODO
+		} else {
+			pathFindMove(ri.location);
 		}
 	}
 
 	protected final void handleInts() throws GameActionException
 	{
+		rc.setIndicatorString(0, "handleInts");
 		refreshLocation();
 
 		//hunger
 		if (health() <= StrategyConstants.WORKER_HUNGER_LEVEL) {
 
+			rc.setIndicatorString(0, "hungry");
 			for (;;) {
 				curLoc = rc.getLocation();
 
@@ -51,64 +92,74 @@ public class Worker extends Unit
 				if (loc != null) {
 					if (inTransferRange(loc)) {
 						rc.broadcast(Messages.hungryMessage(rc));
-						while (health() <= StrategyConstants.WORKER_HUNGER_LEVEL) {
-							rc.yield();
-						}
+						sleep(5);
 						return;
 					} else {
 //						debug_print("hungry");
-						goTo(loc);
+						pathFindMove(loc);
 					}
 				}
 			}
 		} else {
 			//orders
-			int howFar;
 			for (IMessage msg : getMessages()) {
 				if (msg instanceof RequestBlockMessage && blockGoal == null) {
-					RequestBlockMessage rmsg = (RequestBlockMessage) msg;
-					blockGoal = rmsg.whereToUnload;
-					howFar = rmsg.howFar;
-					//				debug_print("before go rand");
-
-					//cp
-
-
-					/*
-					while (health() < 0.6) {
-					curLoc = rc.getLocation();
-
-					yieldIf(_mediumBc);
-					MapLocation loc = worker_nearestArchon();
-
-					if (loc != null) {
-					if (curLoc.distanceSquaredTo(loc) <= 1) {
-					rc.broadcast(Messages.hungryMessage(Messages.MSG_HUNGRY, rc));
-					while (health() <= 0.6) {
-					rc.yield();
-					}
-					return;
-					} else {
-					//						debug_print("hungry");
-					goTo(loc);
-					}
-					}
-					}
-					 */
-
-					///
-					goRandom(howFar);
-					if (rc.senseNumBlocksInCargo(rc.getRobot()) != 0) {
-//						debug_print("zle, mam blocka");
-					}
-
-					if (findBlock()) {
-						returnBlock();
-					}
-					blockGoal = null;
+					onRequestBlock((RequestBlockMessage) msg);
+				} else if (msg instanceof OrderMessage) {
+					((OrderMessage) msg).order.execute(executor);
 				}
 			}
+
 		}
+
+	}
+
+	protected void onRequestBlock(RequestBlockMessage msg) throws GameActionException
+	{
+
+		if (workerPolicy == WorkerPolicy.BeMedic) {
+			return;
+		}
+
+		blockGoal = msg.whereToUnload;
+		int howFar = msg.howFar;
+		//				debug_print("before go rand");
+
+		//cp
+
+
+		/*
+		while (health() < 0.6) {
+		curLoc = rc.getLocation();
+
+		yieldIf(_mediumBc);
+		MapLocation loc = worker_nearestArchon();
+
+		if (loc != null) {
+		if (curLoc.distanceSquaredTo(loc) <= 1) {
+		rc.broadcast(Messages.hungryMessage(Messages.MSG_HUNGRY, rc));
+		while (health() <= 0.6) {
+		rc.yield();
+		}
+		return;
+		} else {
+		//						debug_print("hungry");
+		goTo(loc);
+		}
+		}
+		}
+		 */
+
+		///
+		goRandom(howFar);
+		if (rc.senseNumBlocksInCargo(rc.getRobot()) != 0) {
+//						debug_print("zle, mam blocka");
+		}
+
+		if (findBlock()) {
+			returnBlock();
+		}
+		blockGoal = null;
 
 	}
 

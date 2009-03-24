@@ -1,13 +1,12 @@
 package batman.unit;
 
 import batman.constants.ByteCodeConstants;
-import batman.messaging.Messages;
-import batman.constants.StrategyConstants;
 import batman.management.executor.SoldierExecutor;
+import batman.management.result.ExecutionResult;
 import batman.messaging.message.HungerMessage;
 import batman.messaging.message.IMessage;
 import batman.messaging.message.OrderMessage;
-import batman.strategy.policy.HungerPolicy;
+import batman.unit.state.SoldierState;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
@@ -19,6 +18,7 @@ import battlecode.common.RobotController;
 public class Soldier extends Unit
 {
 	protected SoldierExecutor executor = new SoldierExecutor(this);
+	public SoldierState state = new SoldierState();
 
 	public Soldier(RobotController rc)
 	{
@@ -32,13 +32,28 @@ public class Soldier extends Unit
 			handleInts();
 			rc.yield();
 			updateMap();
-			rc.yield();
+			//rc.yield();
+			if (!state.orderQueue.isEmpty()) {
+				debug_print("begin of execute");
+				state.orderQueue.remove().execute(executor);
+				debug_print("end of execute");
+			}
 		}
 	}
 
 	protected void onHungry() throws GameActionException
 	{
+		/**
+		try {
+		throw new ArithmeticException();
+
+		} catch (Exception e) {
+		e.printStackTrace();
+		}
+		 */
+		rc.setIndicatorString(0, "onHungry");
 		for (;;) {
+			debug_print("onHungry loop");
 			refreshLocation();
 
 			yieldIf(ByteCodeConstants.Medium);
@@ -46,15 +61,28 @@ public class Soldier extends Unit
 
 			if (loc != null) {
 				if (inTransferRange(loc)) {
+					debug_print("in transfer range hungry");
 					rc.broadcast(new HungerMessage(rc).finalSerialize());
-					while (isHungry()) {
-						rc.yield();
-					}
+					state.hungry_FindArchon = false;
+					sleep(5);
 					return;
+				} else if (!state.hungry_FindArchon) {
+					rc.setIndicatorString(0, "onHungry - fp");
+					debug_print("hungry = fp");
+					state.hungry_FindArchon = true;
+
+					pathFindMove(loc);
+					state.hungry_FindArchon = false; //?????!
+					/*if (pathFindMove(loc) != ExecutionResult.OK) {
+				state.hungry_FindArchon = false; //?????!
+				}*/
 				} else {
-//						debug_print("hungry");
-					goTo(loc); //TODO
+					return;
 				}
+			} else {
+				//TODO
+				debug_print("no archon");
+				return;
 			}
 		}
 
@@ -65,15 +93,18 @@ public class Soldier extends Unit
 		for (IMessage inMsg : getMessages()) {
 			if (inMsg instanceof OrderMessage) {
 				OrderMessage msg = (OrderMessage) inMsg;
-				msg.order.execute(executor);
+				state.orderQueue.add(msg.order);
 			}
 		}
 	}
 
-
 	protected final void handleInts() throws GameActionException
 	{
+		rc.setIndicatorString(0, "handleInts");
+		rc.setIndicatorString(1, policy.hungerPolicy.toString());
+
 		if (isHungry()) {
+			debug_print("isHungry");
 			onHungry();
 		} else {
 			processMessages();

@@ -29,6 +29,8 @@ public class AStar implements IPathFinder
 
 		MapLocation cur;
 
+//		DebugUtils.debug_print("astar start");
+
 		if (from.equals(to)) {
 			return Path.emptyPath;
 		}
@@ -39,7 +41,7 @@ public class AStar implements IPathFinder
 
 		int count = 0;
 
-		while (!queue.isEmpty() && count < 600) {
+		while (!queue.isEmpty() && count < 200) {
 			count++; //TODO
 			WeightedMapLocation wcur = queue.remove();
 
@@ -48,9 +50,10 @@ public class AStar implements IPathFinder
 
 			//TODO
 
-			if (byl.contains(cur) || (map.hasLoc(cur) && map.getTile(cur).state != MapTile.LocState.Ground)) {
+			if (byl.contains(cur) || !canMoveIn(map, cur)) {
 				continue;
 			}
+
 			byl.add(cur);
 
 
@@ -71,6 +74,7 @@ public class AStar implements IPathFinder
 
 //				rc.setIndicatorString(0, from.toString());
 //				rc.setIndicatorString(2, to.toString());
+//				DebugUtils.debug_print("astar end");
 				return path;
 			//TODOreturn cur;
 			}
@@ -104,5 +108,15 @@ public class AStar implements IPathFinder
 
 		DebugUtils.debug_print("empty queue");
 		return Path.emptyPath;
+	}
+
+	protected boolean canMoveIn(GameMap map, MapLocation loc)
+	{
+		if (!map.hasLoc(loc)) {
+			return true;
+		}
+
+		MapTile tile = map.getTile(loc);
+		return tile.state == MapTile.LocState.Ground && tile.groundRobot == null;
 	}
 }

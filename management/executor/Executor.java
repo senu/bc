@@ -1,5 +1,6 @@
 package batman.management.executor;
 
+import batman.management.order.BeMedicOrder;
 import batman.management.order.OrderGroup;
 import batman.management.order.PathFindMoveOrder;
 import batman.management.order.SendMessageOrder;
@@ -24,4 +25,6 @@ public interface Executor
 	public ExecutionResult executeChangeRobotPolicyOrder(ChangeRobotPolicyOrder order) throws GameActionException;
 
 	public ExecutionResult executeOrderGroup(OrderGroup order) throws GameActionException;
+
+	public ExecutionResult executeBeMedicOrder(BeMedicOrder order) throws GameActionException;
 }
