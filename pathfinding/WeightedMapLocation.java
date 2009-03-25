@@ -1,5 +1,6 @@
-package batman.utils;
+package batman.pathfinding;
 
+import batman.utils.*;
 import battlecode.common.MapLocation;
 
 /**
@@ -14,19 +15,19 @@ public class WeightedMapLocation extends Pair<MapLocation, Integer> implements
 		super(x, y);
 	}
 
-	public int compareTo(WeightedMapLocation o)
+	public final int compareTo(WeightedMapLocation o)
 	{
 		return y.compareTo(o.y);
 	}
 
 	@Override
-	public boolean equals(Object obj)
+	public final boolean equals(Object obj)
 	{
 		return x.equals(obj);
 	}
 
 	@Override
-	public int hashCode()
+	public final int hashCode()
 	{
 		return x.hashCode();
 	}

@@ -88,7 +88,7 @@ public class Archon extends Unit
 				RobotPolicy rp = new RobotPolicy();
 				rp.hungerPolicy = HungerPolicy.DieStarving;
 				Order order1 = new ChangeRobotPolicyOrder(rp);
-				Order order2 = new PathFindMoveOrder(MapUtils.add(refreshLocation(), 20, 20));
+				Order order2 = new PathFindMoveOrder(MapUtils.add(refreshLocation(), 17, 20));
 //			Order order3 = new PathFindMoveOrder(MapUtils.add(curLoc, 5, 5));
 
 				OrderGroup group = new OrderGroup();

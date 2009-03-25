@@ -35,17 +35,12 @@ public class MapUtils
 	{
 		return MapUtils.add(from, r.nextInt(2 * dx) - dx, r.nextInt(2 * dy) - dy);
 	}
-
-	public final static Direction[] movableDirections()
-	{
-		return new Direction[]{
-					Direction.EAST,
-					Direction.NORTH,
-					Direction.NORTH_EAST, Direction.NORTH_WEST,
-					Direction.SOUTH,
-					Direction.SOUTH_EAST, Direction.SOUTH_WEST,
-					Direction.WEST
-				};
-
-	}
+	public final static Direction[] movableDirections = {
+		Direction.EAST,
+		Direction.NORTH,
+		Direction.NORTH_EAST, Direction.NORTH_WEST,
+		Direction.SOUTH,
+		Direction.SOUTH_EAST, Direction.SOUTH_WEST,
+		Direction.WEST
+	};
 }

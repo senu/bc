@@ -10,6 +10,7 @@ import batman.messaging.message.MessageImpl;
 import batman.messaging.message.OrderMessage;
 import batman.messaging.message.RequestBlockMessage;
 import batman.pathfinding.AStar;
+import batman.pathfinding.FastAStar;
 import batman.utils.MapUtils;
 import batman.pathfinding.GameMap;
 import batman.pathfinding.MapTile;
@@ -288,12 +289,18 @@ public abstract class Unit
 //		debug_print("path find move");
 		updateMap();
 
+		FastAStar fastastar = new FastAStar();
 		AStar astar = new AStar();
 		int rstart = Clock.getRoundNum();
 		rc.setIndicatorString(2, "Astar");
 		Path path = astar.findPath(curLoc, where, map, rc.getRobotType());
 		rc.setIndicatorString(2, "");
 		debug_print("astar took:%d", Clock.getRoundNum() - rstart);
+		rstart = Clock.getRoundNum();
+		rc.setIndicatorString(2, "Astar");
+		path = fastastar.findPath(curLoc, where, map, rc.getRobotType());
+		rc.setIndicatorString(2, "");
+		debug_print("FAST astar took:%d", Clock.getRoundNum() - rstart);
 
 //		debug_print("path find move 0.6");
 

@@ -231,7 +231,7 @@ public class Worker extends Unit
 				rc.yield();
 				return true;
 			} else {
-				for (Direction dir : MapUtils.movableDirections()) {
+				for (Direction dir : MapUtils.movableDirections) {
 					yieldMv();
 					rc.setDirection(dir);
 					rc.yield();
