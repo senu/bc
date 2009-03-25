@@ -14,6 +14,13 @@ public class FastWeightedMapLocation implements
 	public int distance,  heurestic;
 	FastWeightedMapLocation parent;
 
+	public FastWeightedMapLocation(MapLocation loc, int cost)
+	{
+		x = loc.getX();
+		y = loc.getY();
+		distance = cost; //TODO
+	}
+
 	public FastWeightedMapLocation(int x, int y)
 	{
 		this.x = x;

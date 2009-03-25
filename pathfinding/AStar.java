@@ -9,8 +9,8 @@ import battlecode.common.MapLocation;
 import battlecode.common.RobotType;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.PriorityQueue;
 import java.util.Set;
+import java.util.TreeSet;
 
 /**
  *
@@ -20,7 +20,8 @@ public class AStar implements IPathFinder
 {
 	public Path findPath(MapLocation from, MapLocation to, GameMap map, RobotType rt)
 	{
-		PriorityQueue<WeightedMapLocation> queue = new PriorityQueue<WeightedMapLocation>();
+		TreeSet<WeightedMapLocation> queue = new TreeSet<WeightedMapLocation>();
+		//PriorityQueue<WeightedMapLocation> queue = new PriorityQueue<WeightedMapLocation>();
 		queue.add(new WeightedMapLocation(from, 0));
 
 		// -> dist, h
@@ -45,7 +46,8 @@ public class AStar implements IPathFinder
 		while (!queue.isEmpty() && count < 300) {
 			count++; //TODO
 //			DebugUtils.debug_print("astar bc1: %d", Clock.getBytecodeNum());
-			WeightedMapLocation wcur = queue.remove();
+			WeightedMapLocation wcur = queue.first();
+			queue.remove(wcur);
 
 			cur = wcur.x;
 			dcost = costs.get(cur);
@@ -100,6 +102,7 @@ public class AStar implements IPathFinder
 
 						costs.put(next, ndcost);
 						parents.put(next, cur);
+						queue.remove(new WeightedMapLocation(next, count));
 						queue.add(new WeightedMapLocation(next, ndcost + nhcost)); //TODO niepotrzebne czesto
 					}
 				} else {
