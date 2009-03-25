@@ -3,18 +3,21 @@ package batman.pathfinding;
 import batman.utils.SimpleRobotInfo;
 import battlecode.common.Clock;
 import battlecode.common.Robot;
+import java.io.Serializable;
 
 /**
  *
  * @author senu
  */
-public class MapTile
+public class MapTile implements Serializable
 {
+	public static final long serialVersionUID = 1L;
+
 	/** Stan lokacji */
 	public enum LocState
 	{
 		Unknown,
-		Ground, 
+		Ground,
 		Air,
 		Bad, //nie mozna chodzic
 	}

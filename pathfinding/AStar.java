@@ -42,9 +42,9 @@ public class AStar implements IPathFinder
 
 		int count = 0;
 
-		while (!queue.isEmpty() && count < 10) {
+		while (!queue.isEmpty() && count < 300) {
 			count++; //TODO
-//			DebugUtils.debug_print("astar bc1: %d", Clock.getBytecodeNum());
+			DebugUtils.debug_print("astar bc1: %d", Clock.getBytecodeNum());
 			WeightedMapLocation wcur = queue.remove();
 
 			cur = wcur.x;

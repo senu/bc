@@ -4,6 +4,7 @@ import batman.constants.ByteCodeConstants;
 import batman.management.executor.SoldierExecutor;
 import batman.messaging.message.HungerMessage;
 import batman.messaging.message.IMessage;
+import batman.messaging.message.MapTransferResponseMessage;
 import batman.messaging.message.OrderMessage;
 import batman.unit.state.SoldierState;
 import battlecode.common.GameActionException;
@@ -95,6 +96,10 @@ public class Soldier extends Unit
 			if (inMsg instanceof OrderMessage) {
 				OrderMessage msg = (OrderMessage) inMsg;
 				state.orderQueue.add(msg.order);
+			} else if (inMsg instanceof MapTransferResponseMessage) {
+				handleMapTransfer((MapTransferResponseMessage) inMsg);
+				debug_print("got map transfer");
+				map.debug_print();
 			}
 		}
 	}

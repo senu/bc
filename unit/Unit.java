@@ -293,7 +293,7 @@ public abstract class Unit
 		rc.setIndicatorString(2, "Astar");
 		Path path = astar.findPath(curLoc, where, map, rc.getRobotType());
 		rc.setIndicatorString(2, "");
-//		debug_print("astar took:%d", Clock.getRoundNum() - rstart);
+		debug_print("astar took:%d", Clock.getRoundNum() - rstart);
 
 //		debug_print("path find move 0.6");
 
@@ -309,7 +309,7 @@ public abstract class Unit
 		path.debug_print(map);
 		if (rc.getRobotType() == RobotType.SOLDIER) {
 			//map.debug_print();
-			//map.debug_print(path);
+			map.debug_print(path);
 		}
 
 		path.next(); //first loc == curLoc
@@ -448,5 +448,21 @@ public abstract class Unit
 		}
 
 		return ret;
+	}
+
+	protected void handleMapTransfer(MapTransferResponseMessage msg)
+	{
+		for (int i = 0; i < msg.locs.size(); i++) {
+			MapLocation loc = msg.locs.get(i);
+			MapTile tile = map.getTile(loc);
+			MapTile newTile = msg.tiles.get(i);
+			if (tile != null) {
+				if (tile.roundSeen < newTile.roundSeen) {
+					map.setTile(loc, tile);
+				}
+			} else {
+				map.setTile(loc, newTile);
+			}
+		}
 	}
 }

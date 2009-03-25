@@ -1,12 +1,10 @@
 package batman.unit;
 
 import batman.constants.StrategyConstants;
-import batman.management.order.BeMedicOrder;
 import batman.management.order.Order;
 import batman.management.order.PathFindMoveOrder;
 import batman.management.order.ChangeRobotPolicyOrder;
 import batman.management.order.OrderGroup;
-import batman.management.order.SendMessageOrder;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
@@ -14,14 +12,13 @@ import battlecode.common.RobotController;
 import battlecode.common.RobotType;
 import batman.messaging.message.HungerMessage;
 import batman.messaging.message.IMessage;
-import batman.messaging.message.MapTransferRequestMessage;
+import batman.messaging.message.MapTransferResponseMessage;
 import batman.messaging.message.OrderMessage;
 import batman.messaging.message.RequestBlockMessage;
-import batman.pathfinding.AStar;
-import batman.pathfinding.Path;
 import batman.strategy.RobotPolicy;
 import batman.strategy.policy.HungerPolicy;
 import batman.utils.MapUtils;
+import battlecode.common.Clock;
 import battlecode.common.TerrainTile;
 
 /**
@@ -39,27 +36,71 @@ public class Archon extends Unit
 	{
 		yieldMv();
 
-		/*
+
 		if (rc.senseAlliedArchons().length > 1) {
-		rc.suicide();
+			rc.suicide();
 		}
 
 
 		for (int i = 0; i < 34; i++) {
-		goTo(MapUtils.add(refreshLocation(), 30, 30));
-		handleInts();
+			goTo(MapUtils.add(refreshLocation(), 40, 40));
+			handleInts();
 		}
 
 		for (int i = 0; i < 17; i++) {
-		goTo(MapUtils.add(refreshLocation(), -10, -10));
-		handleInts();
+			goTo(MapUtils.add(refreshLocation(), -20, -20));
+			handleInts();
 		}
-		 */
-		goStupid(rand.nextInt(60)); //
+
+		//	goStupid(rand.nextInt(60)); //
 
 		yieldMv();
+		test();
 
-		findFlux(); //
+//		findFlux(); //
+	}
+
+	protected void test() throws GameActionException
+	{
+		buildSoldier();
+
+		for (int loop=0;;loop++) {
+			handleInts();
+			rc.yield();
+			if (loop % 300 == 90) {
+				int ts = Clock.getRoundNum();
+				MapTransferResponseMessage msg = new MapTransferResponseMessage(map.getTileSet());
+//				debug_print("create maptransfer msg took: %d", Clock.getRoundNum()-ts);
+				rc.broadcast(msg.finalSerialize());
+//				debug_print("and serialize map took: %d", Clock.getRoundNum()-ts);
+				rc.yield();
+
+
+//				AStar alg = new AStar();
+//				MapLocation to = MapUtils.randLocRange(curLoc, 30, 30, rand);
+//				Path path = alg.findPath(refreshLocation(), to, map, rc.getRobotType());
+
+			//				debug_print("%d %d ----> %d %d", curLoc.getX(), curLoc.getY(), to.getX(), to.getY());
+			//map.debug_print();
+			//map.debug_print(path);
+			}
+			if (loop % 120 == 100) {
+				RobotPolicy rp = new RobotPolicy();
+				rp.hungerPolicy = HungerPolicy.DieStarving;
+				Order order1 = new ChangeRobotPolicyOrder(rp);
+				Order order2 = new PathFindMoveOrder(MapUtils.add(refreshLocation(), 20, 20));
+//			Order order3 = new PathFindMoveOrder(MapUtils.add(curLoc, 5, 5));
+
+				OrderGroup group = new OrderGroup();
+				group.orders.add(order1);
+				group.orders.add(order2);
+//			group.orders.add(order3);
+
+				rc.broadcast(new OrderMessage(group).finalSerialize());
+				rc.yield();
+			}
+		}
+
 	}
 
 	private final void goStupid(int howLong) throws GameActionException

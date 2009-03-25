@@ -126,4 +126,9 @@ public class GameMap
 
 		return new MapLocation(mx, my);
 	}
+
+	public Set<Entry<MapLocation, MapTile>> getTileSet()
+	{
+		return map.entrySet();
+	}
 }

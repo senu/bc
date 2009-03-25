@@ -17,9 +17,9 @@ public class MutableMessage
 		ints = new ArrayList<Integer>();
 		strings = new ArrayList<String>();
 	}
-	public List<MapLocation> locations;
-	public List<Integer> ints;
-	public List<String> strings;
+	public ArrayList<MapLocation> locations;
+	public ArrayList<Integer> ints;
+	public ArrayList<String> strings;
 
 	public Message serialize()
 	{
