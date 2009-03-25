@@ -39,7 +39,10 @@ public class AStar implements IPathFinder
 //		HashMap<MapLocation, Integer> costs = new HashMap<MapLocation, Integer>(100);
 //		HashMap<MapLocation, MapLocation> parents = new HashMap<MapLocation, MapLocation>(100);
 		HashMap<MapLocation, CostAndParent> nodes = new HashMap<MapLocation, CostAndParent>(100);
-		Set<MapLocation> byl = new HashSet<MapLocation>(100);
+		//Set<MapLocation> byl = new HashSet<MapLocation>(100);
+		boolean[][] byl = new boolean[map.My - map.my + 1][map.Mx - map.mx + 1];
+		int mx = map.mx;
+		int my = map.my;
 
 		MapLocation cur;
 
@@ -64,12 +67,14 @@ public class AStar implements IPathFinder
 			dcost = nodes.get(cur).cost;
 
 			//TODO
-
-			if (byl.contains(cur) || !canMoveIn(map, cur)) {
+			int x = cur.getX();
+			int y = cur.getY();
+			if (byl[x-mx][y-my] || !canMoveIn(map, cur)) {
 				continue;
 			}
 
-			byl.add(cur);
+			//byl.add(cur);
+			byl[x-mx][y-my]=true;
 
 
 //			DebugUtils.debug_print("astar bc2: %d", Clock.getBytecodeNum());
@@ -99,7 +104,7 @@ public class AStar implements IPathFinder
 				MapLocation next = cur.add(dir);
 //				DebugUtils.debug_print("astar bc3b: %d", Clock.getBytecodeNum());
 
-				if (byl.contains(next)) {
+				if (byl[next.getY()-my][next.getX()-mx]) {
 					continue;
 				}
 
