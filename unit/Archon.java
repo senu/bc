@@ -39,66 +39,27 @@ public class Archon extends Unit
 	{
 		yieldMv();
 
-
+		/*
 		if (rc.senseAlliedArchons().length > 1) {
-			rc.suicide();
+		rc.suicide();
 		}
 
 
 		for (int i = 0; i < 34; i++) {
-			goTo(MapUtils.add(refreshLocation(), 30, 30));
-			handleInts();
+		goTo(MapUtils.add(refreshLocation(), 30, 30));
+		handleInts();
 		}
 
 		for (int i = 0; i < 17; i++) {
-			goTo(MapUtils.add(refreshLocation(), -10, -10));
-			handleInts();
+		goTo(MapUtils.add(refreshLocation(), -10, -10));
+		handleInts();
 		}
-
-		//goStupid(rand.nextInt(20)); //
+		 */
+		goStupid(rand.nextInt(60)); //
 
 		yieldMv();
 
-		buildWorker();
-		buildWorker();
-		buildWorker();
-
-		rc.broadcast(new OrderMessage(new BeMedicOrder()).finalSerialize());
-
-		buildSoldier();
-
-		for (;;) {
-			handleInts();
-			rc.yield();
-			if (rand.nextInt(350) == 0) {
-				AStar alg = new AStar();
-				MapLocation to = MapUtils.randLocRange(curLoc, 30, 30, rand);
-				Path path = alg.findPath(refreshLocation(), to, map, rc.getRobotType());
-
-//				debug_print("%d %d ----> %d %d", curLoc.getX(), curLoc.getY(), to.getX(), to.getY());
-			//map.debug_print();
-			//map.debug_print(path);
-			}
-
-			if (rand.nextInt(120) == 0) {
-				RobotPolicy rp = new RobotPolicy();
-				rp.hungerPolicy = HungerPolicy.HungryAt35;
-				Order order1 = new ChangeRobotPolicyOrder(rp);
-				Order order2 = new PathFindMoveOrder(MapUtils.add(refreshLocation(), 5, 0));
-				Order order3 = new PathFindMoveOrder(MapUtils.add(curLoc, 5, 5));
-
-				OrderGroup group = new OrderGroup();
-				group.orders.add(order1);
-				group.orders.add(order2);
-				group.orders.add(order3);
-
-				rc.broadcast(new OrderMessage(group).finalSerialize());
-				rc.yield();
-				rc.broadcast(new OrderMessage(new PathFindMoveOrder(MapUtils.add(refreshLocation(), 5, 0))).finalSerialize());
-			}
-		}
-
-//		findFlux(); //
+		findFlux(); //
 	}
 
 	private final void goStupid(int howLong) throws GameActionException
@@ -151,7 +112,47 @@ public class Archon extends Unit
 				return;
 			}
 		} else { //omni
-			buildWorker();
+
+
+			//buildWorker();
+
+//			rc.broadcast(new OrderMessage(new BeMedicOrder()).finalSerialize());
+
+			buildSoldier();
+
+//			for (;;) {
+				/*
+			handleInts();
+			rc.yield();
+			if (rand.nextInt(350) == 0) {
+			AStar alg = new AStar();
+			MapLocation to = MapUtils.randLocRange(curLoc, 30, 30, rand);
+			Path path = alg.findPath(refreshLocation(), to, map, rc.getRobotType());
+
+			//				debug_print("%d %d ----> %d %d", curLoc.getX(), curLoc.getY(), to.getX(), to.getY());
+			//map.debug_print();
+			//map.debug_print(path);
+			}
+			//			if (rand.nextInt(120) == 0) {
+			RobotPolicy rp = new RobotPolicy();
+			rp.hungerPolicy = HungerPolicy.HungryAt35;
+			Order order1 = new ChangeRobotPolicyOrder(rp);
+			Order order2 = new PathFindMoveOrder(MapUtils.add(refreshLocation(), 5, 0));
+			Order order3 = new PathFindMoveOrder(MapUtils.add(curLoc, 5, 5));
+
+			OrderGroup group = new OrderGroup();
+			group.orders.add(order1);
+			group.orders.add(order2);
+			group.orders.add(order3);
+
+			rc.broadcast(new OrderMessage(group).finalSerialize());
+			rc.yield();
+			 */
+//			}
+//			}
+
+//			buildWorker();
+
 
 			for (int i = 1;; i++) {
 				rc.setIndicatorString(1, "extract");
@@ -160,8 +161,12 @@ public class Archon extends Unit
 				if (rand.nextInt(50) == 0) {
 					requestBlock(rand.nextInt(5) + 3);
 				}
-				if (i % 100 == 0) {
+				if (i % 100 == 20) {
 					buildWorker();
+				}
+				if (i % 70 == 0 && i > 600) {
+					buildSoldier();
+					rc.broadcast(new OrderMessage(new PathFindMoveOrder(MapUtils.randLocRange(refreshLocation(), 2, 2, rand))).finalSerialize());
 				}
 			}
 		}
@@ -234,6 +239,7 @@ public class Archon extends Unit
 		refreshLocation();
 
 		if (loc.equals(curLoc) || loc.isAdjacentTo(curLoc)) {
+			yieldMediumBC();
 			if (rc.senseGroundRobotAtLocation(loc) != null) { //TODO
 				int howMuch = msg.howMuch;
 				if (hasEnergon(howMuch + StrategyConstants.ARCHON_MIN_ENERGON_LEVEL)) {

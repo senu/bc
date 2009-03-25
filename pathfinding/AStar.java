@@ -42,7 +42,7 @@ public class AStar implements IPathFinder
 
 		int count = 0;
 
-		while (!queue.isEmpty() && count < 40) {
+		while (!queue.isEmpty() && count < 10) {
 			count++; //TODO
 //			DebugUtils.debug_print("astar bc1: %d", Clock.getBytecodeNum());
 			WeightedMapLocation wcur = queue.remove();
@@ -109,7 +109,7 @@ public class AStar implements IPathFinder
 			}
 		}
 
-		DebugUtils.debug_print("empty queue");
+//TODO		DebugUtils.debug_print("empty queue");
 		return Path.emptyPath;
 	}
 

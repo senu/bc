@@ -2,7 +2,6 @@ package batman.unit;
 
 import batman.constants.ByteCodeConstants;
 import batman.management.executor.SoldierExecutor;
-import batman.management.result.ExecutionResult;
 import batman.messaging.message.HungerMessage;
 import batman.messaging.message.IMessage;
 import batman.messaging.message.OrderMessage;
@@ -10,6 +9,8 @@ import batman.unit.state.SoldierState;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
+import battlecode.common.RobotInfo;
+import java.util.List;
 
 /**
  *
@@ -34,9 +35,9 @@ public class Soldier extends Unit
 			updateMap();
 			//rc.yield();
 			if (!state.orderQueue.isEmpty()) {
-				debug_print("begin of execute");
+//				debug_print("begin of execute");
 				state.orderQueue.remove().execute(executor);
-				debug_print("end of execute");
+//				debug_print("end of execute");
 			}
 		}
 	}
@@ -53,7 +54,7 @@ public class Soldier extends Unit
 		 */
 		rc.setIndicatorString(0, "onHungry");
 		for (;;) {
-			debug_print("onHungry loop");
+//			debug_print("onHungry loop");
 			refreshLocation();
 
 			yieldIf(ByteCodeConstants.Medium);
@@ -61,14 +62,14 @@ public class Soldier extends Unit
 
 			if (loc != null) {
 				if (inTransferRange(loc)) {
-					debug_print("in transfer range hungry");
+//					debug_print("in transfer range hungry");
 					rc.broadcast(new HungerMessage(rc).finalSerialize());
 					state.hungry_FindArchon = false;
 					sleep(5);
 					return;
 				} else if (!state.hungry_FindArchon) {
 					rc.setIndicatorString(0, "onHungry - fp");
-					debug_print("hungry = fp");
+//					debug_print("hungry = fp");
 					state.hungry_FindArchon = true;
 
 					pathFindMove(loc);
@@ -104,10 +105,21 @@ public class Soldier extends Unit
 		rc.setIndicatorString(1, policy.hungerPolicy.toString());
 
 		if (isHungry()) {
-			debug_print("isHungry");
+//			debug_print("isHungry");
 			onHungry();
-		} else {
-			processMessages();
+			return;
 		}
+
+		List<RobotInfo> enemies = getEnemyGroundUnits();
+		yieldAtt();
+		for (RobotInfo enemy : enemies) {
+			if (rc.canAttackSquare(enemy.location)) {
+				rc.attackGround(enemy.location);
+				break;
+			}
+		}
+
+		processMessages();
+
 	}
 }

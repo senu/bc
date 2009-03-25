@@ -32,11 +32,11 @@ public abstract class MessageImpl implements IMessage
 
 	public final void finalDeserialize(Message msg)
 	{
-		round = msg.ints[1];
-		priority = msg.ints[2];
-		recipient = Recipient.values()[msg.ints[3]];
+		round = msg.ints[2];
+		priority = msg.ints[3];
+		recipient = Recipient.values()[msg.ints[4]];
 
-		deserialize(new SerializationIterator(msg, 4, 0, 0));
+		deserialize(new SerializationIterator(msg, 5, 0, 0));
 
 	}
 
@@ -44,6 +44,7 @@ public abstract class MessageImpl implements IMessage
 	{
 		MutableMessage m = new MutableMessage();
 //		m.strings.add(this.getClass().getName());
+		m.ints.add(123456789);
 		m.ints.add(getMessageType());
 		m.ints.add(round);
 		m.ints.add(priority);

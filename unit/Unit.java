@@ -133,6 +133,13 @@ public abstract class Unit
 		}
 	}
 
+	protected final void yieldAtt()
+	{
+		while (rc.isAttackActive()) {
+			rc.yield();
+		}
+	}
+
 	/** Yield jesli pozostalo mu mniej BC niz potrzebuje */
 	protected final void yieldIf(int need)
 	{
@@ -270,14 +277,14 @@ public abstract class Unit
 	{
 		rc.setIndicatorString(0, "pathFindMove");
 
-/*		try {
-			if (rc.getRobotType() == RobotType.WORKER) {
-				throw new ArithmeticException();
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
+		/*		try {
+		if (rc.getRobotType() == RobotType.WORKER) {
+		throw new ArithmeticException();
 		}
- */
+		} catch (Exception e) {
+		e.printStackTrace();
+		}
+		 */
 //		debug_print("path find move");
 		updateMap();
 
@@ -286,7 +293,7 @@ public abstract class Unit
 		rc.setIndicatorString(2, "Astar");
 		Path path = astar.findPath(curLoc, where, map, rc.getRobotType());
 		rc.setIndicatorString(2, "");
-		debug_print("astar took:%d", Clock.getRoundNum() - rstart);
+//		debug_print("astar took:%d", Clock.getRoundNum() - rstart);
 
 //		debug_print("path find move 0.6");
 
@@ -301,8 +308,8 @@ public abstract class Unit
 //		debug_print("path find move 2");
 		path.debug_print(map);
 		if (rc.getRobotType() == RobotType.SOLDIER) {
-			map.debug_print();
-			map.debug_print(path);
+			//map.debug_print();
+			//map.debug_print(path);
 		}
 
 		path.next(); //first loc == curLoc
@@ -315,8 +322,8 @@ public abstract class Unit
 
 //			debug_print("%d at: %s", Clock.getRoundNum(), refreshLocation().toString());
 			if (rc.getRobotType() == RobotType.SOLDIER) {
-				map.debug_print();
-				map.debug_print(path);
+//				map.debug_print();
+//				map.debug_print(path);
 			}
 
 			MapLocation next = path.getNext();
@@ -340,7 +347,7 @@ public abstract class Unit
 				rc.moveForward();
 				rc.yield();
 			} else {
-				debug_print("newPath -- to nie powinno sie czesto zdarzac");
+//TODO!				debug_print("newPath -- to nie powinno sie czesto zdarzac");
 				path = astar.findPath(refreshLocation(), where, map, rc.getRobotType());
 				if (path == Path.emptyPath) {
 					return ExecutionResult.Failed;
@@ -392,7 +399,10 @@ public abstract class Unit
 			}
 
 			for (Message m : msgs) {
-				int type = m.ints[0];
+				if (m.ints[0] != 123456789) {
+					continue;
+				}
+				int type = m.ints[1];
 				IMessage newMsg = ((IMessage) messageTypes.get(type).newInstance());
 				newMsg.finalDeserialize(m);
 				ret.add(newMsg);
@@ -419,6 +429,19 @@ public abstract class Unit
 		for (Robot robot : rc.senseNearbyGroundRobots()) {
 			RobotInfo ri = rc.senseRobotInfo(robot);
 			if (ri.team == myTeam) {
+				ret.add(ri);
+			}
+
+		}
+		return ret;
+	}
+
+	protected List<RobotInfo> getEnemyGroundUnits() throws GameActionException
+	{
+		ArrayList<RobotInfo> ret = new ArrayList<RobotInfo>(10);
+		for (Robot robot : rc.senseNearbyGroundRobots()) {
+			RobotInfo ri = rc.senseRobotInfo(robot);
+			if (ri.team != myTeam) {
 				ret.add(ri);
 			}
 
