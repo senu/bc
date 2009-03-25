@@ -18,6 +18,17 @@ import java.util.TreeSet;
  */
 public class AStar implements IPathFinder
 {
+	class CostAndParent
+	{
+		public CostAndParent(int cost, MapLocation parent)
+		{
+			this.cost = cost;
+			this.parent = parent;
+		}
+		public int cost;
+		public MapLocation parent;
+	}
+
 	public Path findPath(MapLocation from, MapLocation to, GameMap map, RobotType rt)
 	{
 		TreeSet<WeightedMapLocation> queue = new TreeSet<WeightedMapLocation>();
@@ -25,8 +36,9 @@ public class AStar implements IPathFinder
 		queue.add(new WeightedMapLocation(from, 0));
 
 		// -> dist, h
-		HashMap<MapLocation, Integer> costs = new HashMap<MapLocation, Integer>(100);
-		HashMap<MapLocation, MapLocation> parents = new HashMap<MapLocation, MapLocation>(100);
+//		HashMap<MapLocation, Integer> costs = new HashMap<MapLocation, Integer>(100);
+//		HashMap<MapLocation, MapLocation> parents = new HashMap<MapLocation, MapLocation>(100);
+		HashMap<MapLocation, CostAndParent> nodes = new HashMap<MapLocation, CostAndParent>(100);
 		Set<MapLocation> byl = new HashSet<MapLocation>(100);
 
 		MapLocation cur;
@@ -38,8 +50,7 @@ public class AStar implements IPathFinder
 		}
 
 		int dcost;
-		costs.put(from, new Integer(0));
-		parents.put(from, from);
+		nodes.put(from, new CostAndParent(0, from));
 
 		int count = 0;
 
@@ -50,7 +61,7 @@ public class AStar implements IPathFinder
 			queue.remove(wcur);
 
 			cur = wcur.x;
-			dcost = costs.get(cur);
+			dcost = nodes.get(cur).cost;
 
 			//TODO
 
@@ -65,11 +76,11 @@ public class AStar implements IPathFinder
 			DebugUtils.debug_print("astar bc3: %d %s", Clock.getBytecodeNum(), cur.toString());
 			if (cur.equals(to)) {
 				Path path = new Path();
-				MapLocation parent = parents.get(cur);
+				MapLocation parent = nodes.get(cur).parent;
 				while (!parent.equals(from)) {
 					path.getPath().add(cur);
 					cur = parent;
-					parent = parents.get(cur);
+					parent = nodes.get(cur).parent;
 				//    debug_print("parent loop: %s -> %s -> %s [%s]", from, cur, to, parent);
 				}
 
@@ -91,24 +102,21 @@ public class AStar implements IPathFinder
 				if (byl.contains(next)) {
 					continue;
 				}
-				//	DebugUtils.debug_print("astar bc3c: %d", Clock.getBytecodeNum());
 
 				int ndcost = dcost + 1;
 				int nhcost = Math.abs(to.getX() - next.getX()) + Math.abs(to.getY() - next.getY());
 
-				if (costs.containsKey(next)) {
-					if (costs.get(next) > ndcost) {
-						costs.remove(next);
-
-						costs.put(next, ndcost);
-						parents.put(next, cur);
-						queue.remove(new WeightedMapLocation(next, count));
-						queue.add(new WeightedMapLocation(next, ndcost + nhcost)); //TODO niepotrzebne czesto
+				CostAndParent cap = nodes.get(next);
+				if (cap != null) {
+					if (cap.cost > ndcost) {
+						cap.cost = ndcost;
+						cap.parent = cur;
+						queue.remove(new WeightedMapLocation(next, count));///?
+						queue.add(new WeightedMapLocation(next, ndcost + nhcost));
 					}
 				} else {
-					parents.put(next, cur);
-					costs.put(next, ndcost);
-					queue.add(new WeightedMapLocation(next, ndcost + nhcost)); //TODO niepotrzebne czesto
+					nodes.put(next, new CostAndParent(ndcost, cur));
+					queue.add(new WeightedMapLocation(next, ndcost + nhcost));
 				}
 			}
 		}

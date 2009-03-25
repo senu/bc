@@ -13,9 +13,24 @@ import java.util.Set;
 public class GameMap
 {
 	private HashMap<MapLocation, MapTile> map = new HashMap<MapLocation, MapTile>();
+	public int mx = Integer.MAX_VALUE,  my = Integer.MAX_VALUE; //shift
+	public int Mx = Integer.MIN_VALUE,  My = Integer.MIN_VALUE;
 
 	public final void setTile(MapLocation loc, MapTile state)
 	{
+		if (loc.getX() < mx) {
+			mx = loc.getX();
+		}
+		if (loc.getX() > Mx) {
+			Mx = loc.getX();
+		}
+		if (loc.getY() < my) {
+			my = loc.getY();
+		}
+		if (loc.getY() > My) {
+			My = loc.getY();
+		}
+
 		map.put(loc, state);
 	}
 
@@ -37,8 +52,6 @@ public class GameMap
 	public void debug_print(Path path)
 	{
 //		MapLocation min =
-		int mx = Integer.MAX_VALUE, my = Integer.MAX_VALUE, //shift
-				Mx = Integer.MIN_VALUE, My = Integer.MIN_VALUE;
 		Set<MapLocation> ks = new HashSet<MapLocation>(map.keySet());
 
 		for (MapLocation loc : path.getPath()) {
