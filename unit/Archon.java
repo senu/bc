@@ -5,6 +5,7 @@ import batman.management.order.Order;
 import batman.management.order.PathFindMoveOrder;
 import batman.management.order.ChangeRobotPolicyOrder;
 import batman.management.order.OrderGroup;
+import batman.messaging.Recipient;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
@@ -62,9 +63,8 @@ public class Archon extends Unit
 
 	protected void test() throws GameActionException
 	{
-		buildSoldier();
 
-		for (int loop=0;;loop++) {
+		for (int loop = 0;; loop++) {
 			handleInts();
 			rc.yield();
 			if (loop % 300 == 90) {
@@ -85,10 +85,12 @@ public class Archon extends Unit
 			//map.debug_print(path);
 			}
 			if (loop % 120 == 100) {
+				buildSoldier();
+				buildSoldier();
 				RobotPolicy rp = new RobotPolicy();
-				rp.hungerPolicy = HungerPolicy.DieStarving;
+				rp.hungerPolicy = HungerPolicy.HungryAt35;
 				Order order1 = new ChangeRobotPolicyOrder(rp);
-				Order order2 = new PathFindMoveOrder(MapUtils.add(refreshLocation(), 17, 20));
+				Order order2 = new PathFindMoveOrder(MapUtils.add(refreshLocation(), 21, 19));
 //			Order order3 = new PathFindMoveOrder(MapUtils.add(curLoc, 5, 5));
 
 				OrderGroup group = new OrderGroup();
@@ -159,7 +161,6 @@ public class Archon extends Unit
 
 //			rc.broadcast(new OrderMessage(new BeMedicOrder()).finalSerialize());
 
-			buildSoldier();
 
 //			for (;;) {
 				/*
@@ -204,10 +205,11 @@ public class Archon extends Unit
 				}
 				if (i % 100 == 20) {
 					buildWorker();
+					rc.broadcast(new OrderMessage(new PathFindMoveOrder(MapUtils.randLocRange(refreshLocation(), 5, 5, rand))).finalSerialize());
 				}
 				if (i % 70 == 0 && i > 600) {
 					buildSoldier();
-					rc.broadcast(new OrderMessage(new PathFindMoveOrder(MapUtils.randLocRange(refreshLocation(), 2, 2, rand))).finalSerialize());
+					buildSoldier();
 				}
 			}
 		}
@@ -233,6 +235,8 @@ public class Archon extends Unit
 			if (rc.senseGroundRobotAtLocation(frontLoc()) == null && rc.senseTerrainTile(frontLoc()).getType() == TerrainTile.TerrainType.LAND) {
 				rc.spawn(type);
 				rc.yield();
+			} else {
+				debug_print("cannot spawn unit");
 			}
 
 		} catch (Exception e) {
@@ -290,5 +294,11 @@ public class Archon extends Unit
 			}
 		}
 
+	}
+
+	@Override
+	protected boolean checkRecipient(Recipient recipient) throws GameActionException
+	{
+		return (recipient.toWhom.flag & Recipient.RecipientType.Archons.flag) == Recipient.RecipientType.Archons.flag; //TODO medics
 	}
 }

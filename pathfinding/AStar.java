@@ -40,13 +40,49 @@ public class AStar implements IPathFinder
 //		HashMap<MapLocation, MapLocation> parents = new HashMap<MapLocation, MapLocation>(100);
 		HashMap<MapLocation, CostAndParent> nodes = new HashMap<MapLocation, CostAndParent>(100);
 		//Set<MapLocation> byl = new HashSet<MapLocation>(100);
-		boolean[][] byl = new boolean[map.My - map.my + 1][map.Mx - map.mx + 1];
+		//zaklada sie, ze from nalezy do mapy
+
+
+		int Mx = map.Mx;
+		int My = map.My;
 		int mx = map.mx;
 		int my = map.my;
+		if (to.getX() < mx) {
+			mx = to.getX();
+		}
+		if (to.getX() > Mx) {
+			Mx = to.getX();
+		}
+		if (to.getY() < my) {
+			my = to.getY();
+		}
+		if (to.getY() > My) {
+			My = to.getY();
+		}
+		//
+		if (from.getX() < mx) {
+			mx = from.getX();
+		}
+		if (from.getX() > Mx) {
+			Mx = from.getX();
+		}
+		if (from.getY() < my) {
+			my = from.getY();
+		}
+		if (from.getY() > My) {
+			My = from.getY();
+		}
+
+		mx -= 25;
+		my -= 25;
+		Mx += 25;
+		My += 25;
+
+		boolean[][] byl = new boolean[My - my + 1][Mx - mx + 1];
 
 		MapLocation cur;
 
-//		DebugUtils.debug_print("astar start");
+		DebugUtils.debug_print("astar start");
 
 		if (from.equals(to)) {
 			return Path.emptyPath;
@@ -67,18 +103,22 @@ public class AStar implements IPathFinder
 			dcost = nodes.get(cur).cost;
 
 			//TODO
+//			DebugUtils.debug_print("astar bc3: %d %s", Clock.getBytecodeNum(), cur.toString());
 			int x = cur.getX();
 			int y = cur.getY();
-			if (byl[x-mx][y-my] || !canMoveIn(map, cur)) {
+			if (y - my < 0 || My - y < 0 || x - mx < 0 || Mx - x < 0) {
+				continue;
+			}
+			if (byl[y - my][x - mx] || !canMoveIn(map, cur)) {
 				continue;
 			}
 
+
 			//byl.add(cur);
-			byl[x-mx][y-my]=true;
+			byl[y - my][x - mx] = true;
 
 
 //			DebugUtils.debug_print("astar bc2: %d", Clock.getBytecodeNum());
-			DebugUtils.debug_print("astar bc3: %d %s", Clock.getBytecodeNum(), cur.toString());
 			if (cur.equals(to)) {
 				Path path = new Path();
 				MapLocation parent = nodes.get(cur).parent;
@@ -104,7 +144,12 @@ public class AStar implements IPathFinder
 				MapLocation next = cur.add(dir);
 //				DebugUtils.debug_print("astar bc3b: %d", Clock.getBytecodeNum());
 
-				if (byl[next.getY()-my][next.getX()-mx]) {
+				x = next.getX();
+				y = next.getY();
+				if (y - my < 0 || My - y < 0 || x - mx < 0 || Mx - x < 0) {
+					continue;
+				}
+				if (byl[y - my][x - mx]) {
 					continue;
 				}
 
@@ -126,7 +171,7 @@ public class AStar implements IPathFinder
 			}
 		}
 
-//TODO		DebugUtils.debug_print("empty queue");
+		DebugUtils.debug_print("empty queue");
 		return Path.emptyPath;
 	}
 

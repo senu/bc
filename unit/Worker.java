@@ -4,6 +4,7 @@ import batman.constants.ByteCodeConstants;
 import batman.constants.StrategyConstants;
 import batman.management.executor.WorkerExecutor;
 import batman.messaging.Messages;
+import batman.messaging.Recipient;
 import batman.messaging.message.IMessage;
 import batman.messaging.message.OrderMessage;
 import batman.messaging.message.RequestBlockMessage;
@@ -303,5 +304,11 @@ public class Worker extends Unit
 			} else {
 			}
 		}
+	}
+
+	@Override
+	protected boolean checkRecipient(Recipient recipient) throws GameActionException
+	{
+		return (recipient.toWhom.flag & Recipient.RecipientType.All.flag) == Recipient.RecipientType.All.flag; //TODO medics
 	}
 }

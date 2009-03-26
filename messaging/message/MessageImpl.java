@@ -13,7 +13,7 @@ public abstract class MessageImpl implements IMessage
 {
 	public int round;
 	public int priority;
-	public Recipient recipient = Recipient.All;
+	public Recipient recipient = new Recipient();
 
 	public int getPriority()
 	{
@@ -32,11 +32,12 @@ public abstract class MessageImpl implements IMessage
 
 	public final void finalDeserialize(Message msg)
 	{
-		round = msg.ints[2];
-		priority = msg.ints[3];
-		recipient = Recipient.values()[msg.ints[4]];
+		SerializationIterator it = new SerializationIterator(msg, 2, 0, 0);
+		round = it.getInt();
+		priority = it.getInt();
+		recipient.deserialize(it);
 
-		deserialize(new SerializationIterator(msg, 5, 0, 0));
+		deserialize(it);
 
 	}
 
@@ -48,7 +49,7 @@ public abstract class MessageImpl implements IMessage
 		m.ints.add(getMessageType());
 		m.ints.add(round);
 		m.ints.add(priority);
-		m.ints.add(recipient.ordinal());
+		recipient.serialize(m);
 
 		serialize(m);
 		return m.serialize();

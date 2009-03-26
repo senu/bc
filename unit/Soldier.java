@@ -2,6 +2,7 @@ package batman.unit;
 
 import batman.constants.ByteCodeConstants;
 import batman.management.executor.SoldierExecutor;
+import batman.messaging.Recipient;
 import batman.messaging.message.HungerMessage;
 import batman.messaging.message.IMessage;
 import batman.messaging.message.MapTransferResponseMessage;
@@ -126,5 +127,11 @@ public class Soldier extends Unit
 
 		processMessages();
 
+	}
+
+	@Override
+	protected boolean checkRecipient(Recipient recipient) throws GameActionException
+	{
+		return (recipient.toWhom.flag & Recipient.RecipientType.Soldiers.flag) == Recipient.RecipientType.Soldiers.flag; //TODO medics
 	}
 }

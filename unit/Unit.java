@@ -2,6 +2,7 @@ package batman.unit;
 
 import batman.constants.ByteCodeConstants;
 import batman.management.result.ExecutionResult;
+import batman.messaging.Recipient;
 import batman.messaging.message.IMessage;
 import batman.messaging.message.HungerMessage;
 import batman.messaging.message.MapTransferRequestMessage;
@@ -47,6 +48,7 @@ public abstract class Unit
 	protected GameMap map = new GameMap();
 	protected Team myTeam;
 	public RobotPolicy policy = new RobotPolicy();
+	protected Map<Integer, Class> messageTypes = new HashMap<Integer, Class>();
 
 	//TODO remove
 	class LocStatus
@@ -61,9 +63,36 @@ public abstract class Unit
 		this.rc = rc;
 		this.rand.setSeed(rc.getRobot().getID());
 		this.myTeam = rc.getTeam();
+
+
+		//TODO tak sie tego nie robi
+		Class[] messageClasses = new Class[]{
+			HungerMessage.class,
+			MapTransferRequestMessage.class,
+			MapTransferResponseMessage.class,
+			OrderMessage.class,
+			RequestBlockMessage.class,};
+
+		try {
+			for (Class clazz : messageClasses) {
+				messageTypes.put(((MessageImpl) clazz.newInstance()).getMessageType(), clazz);
+			}
+
+
+		} catch (Exception e) {
+			debug_print("serialization errror");
+			e.printStackTrace();
+		}
+
+
 	}
 
 	public abstract void beYourself() throws GameActionException;
+
+	protected abstract void handleInts() throws GameActionException;
+
+	/** True gdy wiadomosc nas dotyczy */
+	protected abstract boolean checkRecipient(Recipient recipient) throws GameActionException;
 
 	protected final MapLocation refreshLocation()
 	{
@@ -272,8 +301,6 @@ public abstract class Unit
 
 	}
 
-	protected abstract void handleInts() throws GameActionException;
-
 	public ExecutionResult pathFindMove(MapLocation where) throws GameActionException
 	{
 		rc.setIndicatorString(0, "pathFindMove");
@@ -387,39 +414,25 @@ public abstract class Unit
 		Message[] msgs = rc.getAllMessages();
 		List<IMessage> ret = new ArrayList<IMessage>();
 
-
-		//TODO in ctor
-
-		//TODO tak sie tego nie robi
-		Class[] messageClasses = new Class[]{
-			HungerMessage.class,
-			MapTransferRequestMessage.class,
-			MapTransferResponseMessage.class,
-			OrderMessage.class,
-			RequestBlockMessage.class,};
-
-		Map<Integer, Class> messageTypes = new HashMap<Integer, Class>();
-
 		try {
-			for (Class clazz : messageClasses) {
-				messageTypes.put(((MessageImpl) clazz.newInstance()).getMessageType(), clazz);
-			}
-
 			for (Message m : msgs) {
 				if (m.ints[0] != 123456789) {
 					continue;
 				}
+
 				int type = m.ints[1];
 				IMessage newMsg = ((IMessage) messageTypes.get(type).newInstance());
+
+				if (!checkRecipient(newMsg.getRecipient())) {
+					continue;
+				}
+
 				newMsg.finalDeserialize(m);
 				ret.add(newMsg);
 			}
-
 		} catch (Exception e) {
-			debug_print("serialization errror");
 			e.printStackTrace();
 		}
-
 
 		return ret;
 
