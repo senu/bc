@@ -22,9 +22,11 @@ import batman.strategy.policy.HungerPolicy;
 import batman.unit.state.ArchonState;
 import batman.utils.MapUtils;
 import battlecode.common.Clock;
+import battlecode.common.GameConstants;
 import battlecode.common.Robot;
 import battlecode.common.RobotInfo;
 import battlecode.common.TerrainTile;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -38,6 +40,7 @@ public class Archon extends Unit
 	int[] archonIds = new int[6];
 	int myIdx, pairIdx, leaderIdx;
 	ArchonState state = new ArchonState();
+	ArrayList<Integer> mySoldiers = new ArrayList<Integer>(6);
 
 	public Archon(RobotController rc)
 	{
@@ -49,20 +52,25 @@ public class Archon extends Unit
 		yieldMv();
 
 		groupArchons();
-
+		if (myIdx != 0 && myIdx != 1) {
+			rc.suicide();
+		} else {
+			debug_print("leader: %d", leaderIdx);
+		}
 		if (rc.senseAlliedArchons().length > 1) {
 //			rc.suicide();
 		}
 
-		for (int i = 0; i < 60; i++) {
-			stupidWalkStep(MapUtils.add(refreshLocation(), 20 + leaderIdx * 3, 5 * leaderIdx));
-			handleInts();
-		}
+		MapLocation startLoc = MapUtils.add(refreshLocation(), 15 + leaderIdx * 3, 5 * leaderIdx);
+		rc.setIndicatorString(0, "go Start");
 
-		for (int i = 0; i < 17; i++) {
-//			goTo(MapUtils.add(refreshLocation(), -20, -20));
+		for (int i = 0; i < 180; i++) {
+			if (stupidWalkStep(startLoc)) {
+				break;
+			}
 			handleInts();
 		}
+		rc.setIndicatorString(0, "at Start");
 
 		//	goStupid(rand.nextInt(60)); //
 
@@ -103,8 +111,25 @@ public class Archon extends Unit
 	protected void test() throws GameActionException
 	{
 
+
+//				RobotPolicy rp = new RobotPolicy();
+//				rp.hungerPolicy = HungerPolicy.HungryAt35;
+//				Order order1 = new ChangeRobotPolicyOrder(rp);
+//				Order order2 = new PathFindMoveOrder(MapUtils.randLocRange(refreshLocation(), 3, 3, rand));
+////			Order order3 = new PathFindMoveOrder(MapUtils.add(curLoc, 5, 5));
+//
+//				OrderGroup group = new OrderGroup();
+//				group.orders.add(order1);
+//				group.orders.add(order2);
+////			group.orders.add(order3);
+//
+//				rc.broadcast(new OrderMessage(group).finalSerialize());
+//				rc.yield();
 		for (int loop = 0;; loop++) {
 			handleInts();
+			if (loop % 17 == 0) {
+				buildSoldiersIfNeeded();
+			}
 			rc.yield();
 			if (false) {
 				int ts = Clock.getRoundNum();
@@ -123,23 +148,32 @@ public class Archon extends Unit
 			//map.debug_print();
 			//map.debug_print(path);
 			}
-			if (loop % 120 == 100) {
-				buildSoldier();
-				buildSoldier();
-				RobotPolicy rp = new RobotPolicy();
-				rp.hungerPolicy = HungerPolicy.HungryAt35;
-				Order order1 = new ChangeRobotPolicyOrder(rp);
-				Order order2 = new PathFindMoveOrder(MapUtils.randLocRange(refreshLocation(), 3, 3, rand));
-//			Order order3 = new PathFindMoveOrder(MapUtils.add(curLoc, 5, 5));
+		}
 
-				OrderGroup group = new OrderGroup();
-				group.orders.add(order1);
-				group.orders.add(order2);
-//			group.orders.add(order3);
+	}
 
-				rc.broadcast(new OrderMessage(group).finalSerialize());
-				rc.yield();
+	protected void buildSoldiersIfNeeded() throws GameActionException
+	{
+		int count = 0;
+		ArrayList<Integer> newSoldiers = new ArrayList<Integer>(6);
+		for (Robot r : rc.senseNearbyGroundRobots()) {
+			if (mySoldiers.contains(r.getID())) { //TODO clean list
+				count++;
+			} else {
+				newSoldiers.add(r.getID());
 			}
+		}
+
+		if (Clock.getRoundNum() % 10 == 0) { //clean
+			mySoldiers = newSoldiers;
+		}
+
+		if (count == 0) {
+			mySoldiers.clear();
+			debug_print("mySoldiers clear");
+		}
+		if (count < 4) {
+			buildSoldier();
 		}
 
 	}
@@ -254,7 +288,7 @@ public class Archon extends Unit
 		}
 	}
 
-	protected void buildUnit(RobotType type)
+	protected boolean buildUnit(RobotType type)
 	{
 		try {
 			while (!hasEnergon(type.spawnCost())) {
@@ -274,6 +308,7 @@ public class Archon extends Unit
 			if (rc.senseGroundRobotAtLocation(frontLoc()) == null && rc.senseTerrainTile(frontLoc()).getType() == TerrainTile.TerrainType.LAND) {
 				rc.spawn(type);
 				rc.yield();
+				return true;
 			} else {
 				debug_print("cannot spawn unit");
 			}
@@ -282,11 +317,21 @@ public class Archon extends Unit
 			debug_print("spawn unit, exn" + type.toString());
 			e.printStackTrace();
 		}
+		return false;
 	}
 
 	private void buildSoldier() throws GameActionException
 	{
-		buildUnit(RobotType.SOLDIER);
+		if (buildUnit(RobotType.SOLDIER)) {
+			debug_print("built soldier");
+			Robot robot = rc.senseGroundRobotAtLocation(frontLoc());
+			if (robot != null) {
+				mySoldiers.add(robot.getID());
+				debug_print("%s", mySoldiers.toString());
+			} else {
+				debug_print("something went wrong");
+			}
+		}
 	}
 
 	private final void buildWorker() throws GameActionException
@@ -307,6 +352,17 @@ public class Archon extends Unit
 			}
 		}
 
+		checkAndHandleCombat();
+
+
+		if (rand.nextInt(5) == 0) {
+			updateMap();
+		}
+	}
+
+	protected void checkAndHandleCombat() throws GameActionException
+	{
+		yieldHalfBC();
 		List<RobotInfo> enemies = getEnemyGroundUnits();
 		if (!enemies.isEmpty()) {
 			if (!state.closeCombat) {
@@ -315,10 +371,6 @@ public class Archon extends Unit
 			}
 		} else {
 			state.closeCombat = false;
-		}
-
-		if (rand.nextInt(5) == 0) {
-			updateMap();
 		}
 
 	}
@@ -331,8 +383,10 @@ public class Archon extends Unit
 
 		if (loc.equals(curLoc) || loc.isAdjacentTo(curLoc)) {
 			yieldMediumBC();
-			if (rc.senseGroundRobotAtLocation(loc) != null) { //TODO
-				int howMuch = msg.howMuch;
+			Robot robot = rc.senseGroundRobotAtLocation(loc);
+			if (robot != null) { //TODO
+				RobotInfo ri = rc.senseRobotInfo(robot);
+				double howMuch = Math.min(ri.maxEnergon - ri.eventualEnergon, GameConstants.ENERGON_RESERVE_SIZE);
 				if (hasEnergon(howMuch + StrategyConstants.ARCHON_MIN_ENERGON_LEVEL)) {
 					rc.transferEnergon(howMuch, loc, msg.rl);
 					rc.yield();

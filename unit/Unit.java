@@ -188,11 +188,16 @@ public abstract class Unit
 		yieldIf(ByteCodeConstants.Small);
 	}
 
-	//TODO remove it
-	protected final void stupidWalkStep(MapLocation nextLoc) throws GameActionException
+	protected final void yieldHalfBC()
 	{
-		if (curLoc.equals(nextLoc)) {
-			return;
+		yieldIf(ByteCodeConstants.Half);
+	}
+
+	//TODO remove it
+	protected final boolean stupidWalkStep(MapLocation nextLoc) throws GameActionException
+	{
+		if (refreshLocation().equals(nextLoc)) {
+			return true;
 		}
 		yieldMv();
 
@@ -219,6 +224,7 @@ public abstract class Unit
 				map.setTile(nextLoc, new MapTile(MapTile.LocState.Bad)); //TODO to blokuje pole na zawsze, gdy stoi tam robot
 			}
 		}
+		return false;
 	}
 
 	protected void updateMap() throws GameActionException

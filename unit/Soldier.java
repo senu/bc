@@ -9,6 +9,7 @@ import batman.messaging.message.IMessage;
 import batman.messaging.message.MapTransferResponseMessage;
 import batman.messaging.message.OrderMessage;
 import batman.strategy.policy.EnemySpottedPolicy;
+import batman.strategy.policy.HungerPolicy;
 import batman.unit.state.SoldierState;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
@@ -28,6 +29,7 @@ public class Soldier extends Unit
 	public Soldier(RobotController rc)
 	{
 		super(rc);
+		policy.hungerPolicy=HungerPolicy.HungryAt50;
 	}
 
 	@Override
@@ -67,9 +69,12 @@ public class Soldier extends Unit
 			if (loc != null) {
 				if (inTransferRange(loc)) {
 //					debug_print("in transfer range hungry");
-					rc.broadcast(new HungerMessage(rc).finalSerialize());
+					if (--state.hungryMessageDelay <= 0) {
+						rc.broadcast(new HungerMessage(rc).finalSerialize());
+						state.hungryMessageDelay = 10;
+						rc.yield();
+					}
 					state.hungry_FindArchon = false;
-					sleep(5);
 					return;
 				} else if (!state.hungry_FindArchon) {
 					rc.setIndicatorString(0, "onHungry - fp");

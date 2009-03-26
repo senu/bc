@@ -11,5 +11,6 @@ import java.util.Queue;
 public class UnitState
 {
 	public boolean hungry_FindArchon = false;
+	public int hungryMessageDelay = 0;
 	public Queue<Order> orderQueue = new ArrayDeque<Order>();
 }
