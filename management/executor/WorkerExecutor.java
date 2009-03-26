@@ -1,5 +1,6 @@
 package batman.management.executor;
 
+import batman.management.order.AttackMoveOrder;
 import batman.management.order.BeMedicOrder;
 import batman.management.order.ChangeRobotPolicyOrder;
 import batman.management.order.OrderGroup;
@@ -55,5 +56,10 @@ public class WorkerExecutor implements Executor
 		target.policy.hungerPolicy = HungerPolicy.HungryAt35;
 		target.workerPolicy = WorkerPolicy.BeMedic;
 		return ExecutionResult.OK;
+	}
+
+	public ExecutionResult executeAttackMoveOrder(AttackMoveOrder order) throws GameActionException
+	{
+		return ExecutionResult.Failed;
 	}
 }

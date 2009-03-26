@@ -2,11 +2,13 @@ package batman.unit;
 
 import batman.constants.ByteCodeConstants;
 import batman.management.executor.SoldierExecutor;
+import batman.management.result.ExecutionResult;
 import batman.messaging.Recipient;
 import batman.messaging.message.HungerMessage;
 import batman.messaging.message.IMessage;
 import batman.messaging.message.MapTransferResponseMessage;
 import batman.messaging.message.OrderMessage;
+import batman.strategy.policy.EnemySpottedPolicy;
 import batman.unit.state.SoldierState;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
@@ -133,5 +135,17 @@ public class Soldier extends Unit
 	protected boolean checkRecipient(Recipient recipient) throws GameActionException
 	{
 		return (recipient.toWhom.flag & Recipient.RecipientType.Soldiers.flag) == Recipient.RecipientType.Soldiers.flag; //TODO medics
+	}
+
+	public ExecutionResult attackMove(MapLocation where) throws GameActionException
+	{
+		policy.enemySpottedPolicy = EnemySpottedPolicy.FireAtWill;
+
+		for (int i = 0; i < 20; i++) {
+			stupidWalkStep(where);
+			handleInts();
+		}
+
+		return ExecutionResult.OK;
 	}
 }

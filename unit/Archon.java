@@ -1,6 +1,7 @@
 package batman.unit;
 
 import batman.constants.StrategyConstants;
+import batman.management.order.AttackMoveOrder;
 import batman.management.order.Order;
 import batman.management.order.PathFindMoveOrder;
 import batman.management.order.ChangeRobotPolicyOrder;
@@ -18,9 +19,14 @@ import batman.messaging.message.OrderMessage;
 import batman.messaging.message.RequestBlockMessage;
 import batman.strategy.RobotPolicy;
 import batman.strategy.policy.HungerPolicy;
+import batman.unit.state.ArchonState;
 import batman.utils.MapUtils;
 import battlecode.common.Clock;
+import battlecode.common.Robot;
+import battlecode.common.RobotInfo;
 import battlecode.common.TerrainTile;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  *
@@ -28,6 +34,11 @@ import battlecode.common.TerrainTile;
  */
 public class Archon extends Unit
 {
+	/** Wspolpraca archonow. */
+	int[] archonIds = new int[6];
+	int myIdx, pairIdx, leaderIdx;
+	ArchonState state = new ArchonState();
+
 	public Archon(RobotController rc)
 	{
 		super(rc);
@@ -37,19 +48,19 @@ public class Archon extends Unit
 	{
 		yieldMv();
 
+		groupArchons();
 
 		if (rc.senseAlliedArchons().length > 1) {
-			rc.suicide();
+//			rc.suicide();
 		}
 
-
-		for (int i = 0; i < 34; i++) {
-			goTo(MapUtils.add(refreshLocation(), 40, 40));
+		for (int i = 0; i < 60; i++) {
+			stupidWalkStep(MapUtils.add(refreshLocation(), 20 + leaderIdx * 3, 5 * leaderIdx));
 			handleInts();
 		}
 
 		for (int i = 0; i < 17; i++) {
-			goTo(MapUtils.add(refreshLocation(), -20, -20));
+//			goTo(MapUtils.add(refreshLocation(), -20, -20));
 			handleInts();
 		}
 
@@ -61,13 +72,41 @@ public class Archon extends Unit
 //		findFlux(); //
 	}
 
+	/** Grupuje archony w pary. */
+	protected void groupArchons() throws GameActionException
+	{
+		MapLocation[] locs = rc.senseAlliedArchons();
+		for (int i = 0; i < locs.length; i++) {
+			MapLocation loc = locs[i];
+			Robot archon = rc.senseAirRobotAtLocation(loc);
+			archonIds[i] = archon.getID();
+		}
+
+		Arrays.sort(archonIds);
+		for (int i = 0; i < archonIds.length; i++) {
+			if (archonIds[i] == rc.getRobot().getID()) {
+				myIdx = i;
+				if (i % 2 == 0) {
+					pairIdx = i + 1;
+					leaderIdx = myIdx;
+				} else {
+					pairIdx = i - 1;
+					leaderIdx = pairIdx;
+				}
+				break;
+			}
+		}
+
+		debug_print("%d %d %d", myIdx, pairIdx, leaderIdx);
+	}
+
 	protected void test() throws GameActionException
 	{
 
 		for (int loop = 0;; loop++) {
 			handleInts();
 			rc.yield();
-			if (loop % 300 == 90) {
+			if (false) {
 				int ts = Clock.getRoundNum();
 				MapTransferResponseMessage msg = new MapTransferResponseMessage(map.getTileSet());
 //				debug_print("create maptransfer msg took: %d", Clock.getRoundNum()-ts);
@@ -90,7 +129,7 @@ public class Archon extends Unit
 				RobotPolicy rp = new RobotPolicy();
 				rp.hungerPolicy = HungerPolicy.HungryAt35;
 				Order order1 = new ChangeRobotPolicyOrder(rp);
-				Order order2 = new PathFindMoveOrder(MapUtils.add(refreshLocation(), 21, 19));
+				Order order2 = new PathFindMoveOrder(MapUtils.randLocRange(refreshLocation(), 3, 3, rand));
 //			Order order3 = new PathFindMoveOrder(MapUtils.add(curLoc, 5, 5));
 
 				OrderGroup group = new OrderGroup();
@@ -268,11 +307,18 @@ public class Archon extends Unit
 			}
 		}
 
-		if (rand.nextInt(5) == 0) {
-			updateMap();
+		List<RobotInfo> enemies = getEnemyGroundUnits();
+		if (!enemies.isEmpty()) {
+			if (!state.closeCombat) {
+				state.closeCombat = true;
+				rc.broadcast(new OrderMessage(new AttackMoveOrder(enemies.get(0).location)).finalSerialize());
+			}
+		} else {
+			state.closeCombat = false;
 		}
 
 		if (rand.nextInt(5) == 0) {
+			updateMap();
 		}
 
 	}

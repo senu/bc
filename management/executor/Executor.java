@@ -1,5 +1,6 @@
 package batman.management.executor;
 
+import batman.management.order.AttackMoveOrder;
 import batman.management.order.BeMedicOrder;
 import batman.management.order.OrderGroup;
 import batman.management.order.PathFindMoveOrder;
@@ -27,4 +28,6 @@ public interface Executor
 	public ExecutionResult executeOrderGroup(OrderGroup order) throws GameActionException;
 
 	public ExecutionResult executeBeMedicOrder(BeMedicOrder order) throws GameActionException;
+
+	public ExecutionResult executeAttackMoveOrder(AttackMoveOrder order) throws GameActionException;
 }

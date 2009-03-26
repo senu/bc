@@ -6,4 +6,5 @@ package batman.unit.state;
  */
 public class SoldierState extends UnitState
 {
+
 }

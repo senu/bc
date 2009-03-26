@@ -184,7 +184,7 @@ public class Worker extends Unit
 		rc.setIndicatorString(1, "go_rand");
 		MapLocation floc = MapUtils.randLocRange(rc.getLocation(), howFar, howFar, rand);
 		for (int i = 1; i <= 30; i++) {
-			goTo(floc);
+			stupidWalkStep(floc);
 			handleInts();
 			curLoc = rc.getLocation();
 			if (floc.equals(curLoc)) {
@@ -216,7 +216,7 @@ public class Worker extends Unit
 					break;
 				}
 
-				goTo(floc);
+				stupidWalkStep(floc);
 				handleInts();
 				curLoc = rc.getLocation();
 				if (floc.equals(curLoc)) {
@@ -264,7 +264,7 @@ public class Worker extends Unit
 			if (curLoc.isAdjacentTo(blockGoal)) {
 				break;
 			}
-			goTo(blockGoal);
+			stupidWalkStep(blockGoal);
 		}
 
 		yieldMv();

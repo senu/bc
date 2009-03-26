@@ -1,5 +1,6 @@
 package batman.management.executor;
 
+import batman.management.order.AttackMoveOrder;
 import batman.management.order.BeMedicOrder;
 import batman.management.order.Order;
 import batman.management.order.OrderGroup;
@@ -60,4 +61,11 @@ public class SoldierExecutor implements Executor
 	{
 		return ExecutionResult.Failed;
 	}
+
+	public ExecutionResult executeAttackMoveOrder(AttackMoveOrder order) throws GameActionException
+	{
+		return target.attackMove(order.where);
+	}
+
+
 }

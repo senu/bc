@@ -1,5 +1,6 @@
 package batman.messaging.serialization;
 
+import batman.management.order.AttackMoveOrder;
 import batman.management.order.BeMedicOrder;
 import batman.management.order.Order;
 import batman.management.order.OrderGroup;
@@ -27,6 +28,8 @@ public class OrderDispatcher
 			return new SendMessageOrder();
 		} else if (name.equals("OrderGroup")) {
 			return new OrderGroup();
+		} else if (name.equals("AttackMoveOrder")) {
+			return new AttackMoveOrder();
 		} else if (name.equals("BeMedicOrder")) {
 			return new BeMedicOrder();
 		}

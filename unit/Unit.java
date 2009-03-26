@@ -107,10 +107,10 @@ public abstract class Unit
 
 	protected final void ping() throws GameActionException
 	{
-		for (int i = 1; i <= 10; i++) {
+//		for (int i = 1; i <= 10; i++) {
 //TODO			rc.broadcast(Messages.newSimpleMessage(Messages.MSG_PING));
 			rc.yield();
-		}
+//		}
 	}
 
 	protected boolean hasEnergon(double howMuch)
@@ -189,7 +189,7 @@ public abstract class Unit
 	}
 
 	//TODO remove it
-	protected final void goTo(MapLocation nextLoc) throws GameActionException
+	protected final void stupidWalkStep(MapLocation nextLoc) throws GameActionException
 	{
 		if (curLoc.equals(nextLoc)) {
 			return;
