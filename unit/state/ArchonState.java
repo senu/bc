@@ -7,4 +7,6 @@ package batman.unit.state;
 public class ArchonState extends UnitState
 {
 	public boolean closeCombat = false;
+	public boolean followLeader = false;
+	public boolean buildSoldiers = false;
 }

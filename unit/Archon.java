@@ -4,8 +4,7 @@ import batman.constants.StrategyConstants;
 import batman.management.order.AttackMoveOrder;
 import batman.management.order.Order;
 import batman.management.order.PathFindMoveOrder;
-import batman.management.order.ChangeRobotPolicyOrder;
-import batman.management.order.OrderGroup;
+import batman.management.order.SimpleMoveOrder;
 import batman.messaging.Recipient;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
@@ -17,8 +16,6 @@ import batman.messaging.message.IMessage;
 import batman.messaging.message.MapTransferResponseMessage;
 import batman.messaging.message.OrderMessage;
 import batman.messaging.message.RequestBlockMessage;
-import batman.strategy.RobotPolicy;
-import batman.strategy.policy.HungerPolicy;
 import batman.unit.state.ArchonState;
 import batman.utils.MapUtils;
 import battlecode.common.Clock;
@@ -26,6 +23,7 @@ import battlecode.common.GameConstants;
 import battlecode.common.Robot;
 import battlecode.common.RobotInfo;
 import battlecode.common.TerrainTile;
+import battlecode.common.TerrainTile.TerrainType;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -53,7 +51,7 @@ public class Archon extends Unit
 
 		groupArchons();
 		if (myIdx != 0 && myIdx != 1) {
-//			rc.suicide();
+			rc.suicide();
 		} else {
 			debug_print("leader: %d", leaderIdx);
 		}
@@ -61,7 +59,7 @@ public class Archon extends Unit
 //			rc.suicide();
 		}
 
-		MapLocation startLoc = MapUtils.add(refreshLocation(), 15 + leaderIdx*2, leaderIdx);
+		MapLocation startLoc = MapUtils.add(refreshLocation(), 15 + leaderIdx * 2, leaderIdx);
 		rc.setIndicatorString(0, "go Start");
 
 		for (int i = 0; i < 180; i++) {
@@ -100,6 +98,7 @@ public class Archon extends Unit
 				} else {
 					pairIdx = i - 1;
 					leaderIdx = pairIdx;
+					state.followLeader = true;
 				}
 				break;
 			}
@@ -111,6 +110,7 @@ public class Archon extends Unit
 	protected void test() throws GameActionException
 	{
 
+		state.buildSoldiers = true;
 
 //				RobotPolicy rp = new RobotPolicy();
 //				rp.hungerPolicy = HungerPolicy.HungryAt35;
@@ -127,9 +127,6 @@ public class Archon extends Unit
 //				rc.yield();
 		for (int loop = 0;; loop++) {
 			handleInts();
-			if (loop % 17 == 0) {
-				buildSoldiersIfNeeded();
-			}
 			rc.yield();
 			if (false) {
 				int ts = Clock.getRoundNum();
@@ -148,8 +145,56 @@ public class Archon extends Unit
 			//map.debug_print();
 			//map.debug_print(path);
 			}
+
+			if (Clock.getRoundNum() >= 600) {
+				break;
+			}
 		}
 
+		MapLocation targetLoc = refreshLocation();
+
+		for (int loop = 0;; loop++) {
+			if (!state.followLeader) { //lead
+
+				if (targetLoc.equals(refreshLocation())) {
+					targetLoc = MapUtils.randLocRange(refreshLocation(), 10, 10, rand);
+				} else {
+					moveArmy(targetLoc);
+				}
+
+			} else { //follow
+				for (Robot robot : rc.senseNearbyAirRobots()) {
+					if (robot.getID() == archonIds[leaderIdx]) {
+
+						targetLoc = rc.senseRobotInfo(robot).location;
+
+						if (targetLoc.distanceSquaredTo(refreshLocation()) > 2) {
+							moveArmy(targetLoc);
+						}
+						break;
+					}
+				}
+
+			}
+			handleInts();
+		}
+
+	}
+
+	protected void moveArmy(MapLocation targetLoc) throws GameActionException
+	{
+		MapLocation groundLoc = refreshLocation().add(curLoc.directionTo(targetLoc));
+
+		for (int i = 1; rc.senseTerrainTile(groundLoc).getType() != TerrainType.LAND && i <= 3; i++) {
+			groundLoc = groundLoc.add(curLoc.directionTo(targetLoc));
+		}
+
+		Order order = new SimpleMoveOrder(groundLoc);
+		stupidWalkStep(targetLoc);
+		if (!state.followLeader) {
+			rc.broadcast(new OrderMessage(order).finalSerialize());
+			sleep(6);
+		}
 	}
 
 	protected void buildSoldiersIfNeeded() throws GameActionException
@@ -354,9 +399,12 @@ public class Archon extends Unit
 
 		checkAndHandleCombat();
 
-
-		if (rand.nextInt(5) == 0) {
+		if (rand.nextInt(10) == 0) {
 			updateMap();
+		}
+
+		if (state.buildSoldiers && Clock.getRoundNum() % 17 == 0) {
+			buildSoldiersIfNeeded();
 		}
 	}
 

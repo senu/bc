@@ -6,7 +6,7 @@ import batman.management.order.ChangeRobotPolicyOrder;
 import batman.management.order.OrderGroup;
 import batman.management.order.PathFindMoveOrder;
 import batman.management.order.SendMessageOrder;
-import batman.management.order.SingleMoveOrder;
+import batman.management.order.SimpleMoveOrder;
 import batman.management.result.ExecutionResult;
 import batman.strategy.policy.HungerPolicy;
 import batman.strategy.policy.custom.WorkerPolicy;
@@ -46,7 +46,7 @@ public class WorkerExecutor implements Executor
 		return ExecutionResult.Failed;
 	}
 
-	public ExecutionResult executeSingleMoveOrder(SingleMoveOrder order) throws GameActionException
+	public ExecutionResult executeSimpleMoveOrder(SimpleMoveOrder order) throws GameActionException
 	{
 		return ExecutionResult.Failed;
 	}

@@ -11,22 +11,22 @@ import battlecode.common.MapLocation;
  *
  * @author senu
  */
-public class SingleMoveOrder implements Order
+public class SimpleMoveOrder implements Order
 {
 	public MapLocation where;
 
-	public SingleMoveOrder(MapLocation where)
+	public SimpleMoveOrder(MapLocation where)
 	{
 		this.where = where;
 	}
 
-	public SingleMoveOrder()
+	public SimpleMoveOrder()
 	{
 	}
 
 	public ExecutionResult execute(Executor executor) throws GameActionException
 	{
-		return executor.executeSingleMoveOrder(this);
+		return executor.executeSimpleMoveOrder(this);
 	}
 
 	public String getOrderName()

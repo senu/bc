@@ -6,7 +6,7 @@ import batman.management.order.Order;
 import batman.management.order.OrderGroup;
 import batman.management.order.PathFindMoveOrder;
 import batman.management.order.SendMessageOrder;
-import batman.management.order.SingleMoveOrder;
+import batman.management.order.SimpleMoveOrder;
 import batman.management.result.ExecutionResult;
 import batman.management.order.ChangeRobotPolicyOrder;
 import batman.unit.Soldier;
@@ -30,9 +30,9 @@ public class SoldierExecutor implements Executor
 		throw new UnsupportedOperationException("Not supported yet.");
 	}
 
-	public ExecutionResult executeSingleMoveOrder(SingleMoveOrder order) throws GameActionException
+	public ExecutionResult executeSimpleMoveOrder(SimpleMoveOrder order) throws GameActionException
 	{
-		return target.singleMove(order.where);
+		return target.stupidWalkGoTo(order.where);
 	}
 
 	public ExecutionResult executePathFindMoveOrder(PathFindMoveOrder order) throws GameActionException

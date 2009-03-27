@@ -1,6 +1,7 @@
 package batman.unit;
 
 import batman.constants.ByteCodeConstants;
+import batman.constants.StrategyConstants;
 import batman.management.result.ExecutionResult;
 import batman.messaging.Recipient;
 import batman.messaging.message.IMessage;
@@ -109,7 +110,7 @@ public abstract class Unit
 	{
 //		for (int i = 1; i <= 10; i++) {
 //TODO			rc.broadcast(Messages.newSimpleMessage(Messages.MSG_PING));
-			rc.yield();
+		rc.yield();
 //		}
 	}
 
@@ -191,6 +192,44 @@ public abstract class Unit
 	protected final void yieldHalfBC()
 	{
 		yieldIf(ByteCodeConstants.Half);
+	}
+
+	public ExecutionResult stupidWalkGoTo(MapLocation targetLoc) throws GameActionException
+	{
+		yieldSmallBC();
+		if (refreshLocation().equals(targetLoc)) {
+			return ExecutionResult.OK;
+		}
+
+		Direction curDirection, nextDirection;
+		nextDirection = curLoc.directionTo(targetLoc);
+		curDirection = nextDirection;
+
+		for (int i = 1; i < StrategyConstants.STUPID_GO_STEPS; i++) {
+			if (refreshLocation().equals(targetLoc)) {
+				return ExecutionResult.OK;
+			}
+
+			if (nextDirection == curDirection.opposite()) { //nie chcemy sie cofac
+				nextDirection = curDirection;
+			}
+
+			if (!rc.canMove(nextDirection)) { //przeszkoda - omijamy ja dalej
+				nextDirection = curDirection;
+			}
+
+			for (int j = 1; !rc.canMove(nextDirection) && j <= 4; j++) { // kolejna przeszkoda - omijamy idac lewej
+				nextDirection = nextDirection.rotateLeft();
+			}
+
+			curDirection = nextDirection;
+
+			stupidWalkStep(refreshLocation().add(nextDirection));
+			handleInts();
+		}
+
+		return ExecutionResult.Failed;
+
 	}
 
 	//TODO remove it
@@ -405,10 +444,11 @@ public abstract class Unit
 		return ExecutionResult.OK;
 	}
 
-	public ExecutionResult sleep(int howLong)
+	public ExecutionResult sleep(int howLong) throws GameActionException
 	{
 		rc.setIndicatorString(0, "sleep");
 		for (int i = 1; i <= howLong; i++) {
+			handleInts();
 			rc.yield();
 		}
 

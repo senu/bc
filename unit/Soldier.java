@@ -81,7 +81,7 @@ public class Soldier extends Unit
 //					debug_print("hungry = fp");
 					state.hungry_FindArchon = true;
 
-					pathFindMove(loc);
+					stupidWalkGoTo(loc);
 					state.hungry_FindArchon = false; //?????!
 					/*if (pathFindMove(loc) != ExecutionResult.OK) {
 				state.hungry_FindArchon = false; //?????!

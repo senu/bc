@@ -6,7 +6,7 @@ import batman.management.order.Order;
 import batman.management.order.OrderGroup;
 import batman.management.order.PathFindMoveOrder;
 import batman.management.order.SendMessageOrder;
-import batman.management.order.SingleMoveOrder;
+import batman.management.order.SimpleMoveOrder;
 import batman.management.order.ChangeRobotPolicyOrder;
 
 /**
@@ -20,8 +20,8 @@ public class OrderDispatcher
 
 		if (name.equals("PathFindMoveOrder")) {
 			return new PathFindMoveOrder();
-		} else if (name.equals("SingleMoveOrder")) {
-			return new SingleMoveOrder();
+		} else if (name.equals("SimpleMoveOrder")) {
+			return new SimpleMoveOrder();
 		} else if (name.equals("ChangeRobotPolicyOrder")) {
 			return new ChangeRobotPolicyOrder();
 		} else if (name.equals("SendMessageOrder")) {
