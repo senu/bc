@@ -53,7 +53,7 @@ public class Archon extends Unit
 
 		groupArchons();
 		if (myIdx != 0 && myIdx != 1) {
-			rc.suicide();
+//			rc.suicide();
 		} else {
 			debug_print("leader: %d", leaderIdx);
 		}
@@ -61,7 +61,7 @@ public class Archon extends Unit
 //			rc.suicide();
 		}
 
-		MapLocation startLoc = MapUtils.add(refreshLocation(), 15 + leaderIdx * 3, 5 * leaderIdx);
+		MapLocation startLoc = MapUtils.add(refreshLocation(), 15 + leaderIdx*2, leaderIdx);
 		rc.setIndicatorString(0, "go Start");
 
 		for (int i = 0; i < 180; i++) {
