@@ -428,7 +428,7 @@ public class Archon extends Unit
 	protected boolean buildUnit(RobotType type)
 	{
 		try {
-			if (!hasEnergon(type.spawnCost()+10.0)) {
+			if (!hasEnergon(type.spawnCost()+2.0)) {
 				debug_print("cannot spawn unit: not enough energon");
 				return false;
 			}
@@ -524,7 +524,7 @@ public class Archon extends Unit
 			updateMap();
 		}
 
-		if (state.buildSoldiers && timeNow % 20 <= (state.closeCombat ? 4 : 5)) {
+		if (state.buildSoldiers && timeNow % 20 <= (state.closeCombat ? 2 : 3)) {
 			buildSoldiersIfNeeded();
 		}
 
