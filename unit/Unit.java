@@ -56,6 +56,7 @@ public abstract class Unit
 	public RobotPolicy policy;
 	protected Map<Integer, Class> messageTypes = new HashMap<Integer, Class>();
 	protected int handleIntsDepth = 0;
+	protected int stupidGoDepth = 0;
 	protected int timeNow; //niekoniecznie aktualny numer rundy (mapa)
 
 	//TODO remove
@@ -223,6 +224,17 @@ public abstract class Unit
 			CollisionPolicy colPolicy)
 			throws GameActionException
 	{
+		/*
+		stupidGoDepth++;
+
+		if (rc.getRobotType() == RobotType.SOLDIER) {
+		debug_print("stupidGoD: %d", stupidGoDepth);
+		if (stupidGoDepth > 2) {
+		throw new ArithmeticException();
+		}
+		}
+		 */
+
 		boolean searchArchon = (targetLoc == null);
 		//debug_print("stupidWalkGo %s", searchArchon ? "NULL" : targetLoc.toString());
 
@@ -232,6 +244,7 @@ public abstract class Unit
 
 		yieldSmallBC();
 		if (refreshLocation().equals(targetLoc)) {
+			//	stupidGoDepth--;
 			return ExecutionResult.OK;
 		}
 
@@ -244,13 +257,14 @@ public abstract class Unit
 				targetLoc = nearestArchon();
 			}
 			if (refreshLocation().equals(targetLoc)) {
+				//stupidGoDepth--;
 				return ExecutionResult.OK;
 			}
 			nextDirection = curLoc.directionTo(targetLoc);
 
 
 			if (nextDirection == curDirection.opposite()) { //nie chcemy sie cofac
-				if (i % 2 == 0) {
+				if (i % 5 <= 2) {//TODO
 					nextDirection = stupidTurnLeftOrRight(curDirection);
 				} else {
 					nextDirection = curDirection;
@@ -267,7 +281,9 @@ public abstract class Unit
 						if (obstacle != null && rc.senseRobotInfo(obstacle).team == myTeam) {//TODO air, TODO height
 							sleep(1);
 							i -= 2;
-							continue;
+							if (i < 9) { //a little
+								continue;
+							}
 						}
 					}
 					//jednak omijamy
@@ -286,7 +302,9 @@ public abstract class Unit
 						if (obstacle != null && rc.senseRobotInfo(obstacle).team == myTeam) {//TODO air, TODO height
 							sleep(1);
 							i -= 2;
-							continue;
+							if (i < 9) { //a little
+								continue;
+							}
 						}
 					}
 					//jednak omijamy
@@ -300,6 +318,7 @@ public abstract class Unit
 			handleInts();
 		}
 
+		//stupidGoDepth--;
 		return ExecutionResult.Failed;
 
 	}
@@ -546,7 +565,7 @@ public abstract class Unit
 
 		try {
 			for (Message m : msgs) {
-				if (m == null || m.ints == null|| m.ints[0] != 123456788) {
+				if (m == null || m.ints == null || m.ints[0] != 123456788) {
 					continue;
 				}
 

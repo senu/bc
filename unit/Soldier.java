@@ -5,7 +5,6 @@ import batman.constants.StrategyConstants;
 import batman.management.executor.SoldierExecutor;
 import batman.management.result.ExecutionResult;
 import batman.messaging.Recipient;
-import batman.messaging.message.HungerMessage;
 import batman.messaging.message.IMessage;
 import batman.messaging.message.MapTransferResponseMessage;
 import batman.messaging.message.OrderMessage;

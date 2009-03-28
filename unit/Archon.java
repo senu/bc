@@ -58,7 +58,7 @@ public class Archon extends Unit
 		groupArchons();
 
 		if (myIdx != 0 && myIdx != 1) {
-//			rc.suicide();
+			rc.suicide();
 		} else {
 			debug_print("leader: %d", leaderIdx);
 		}
