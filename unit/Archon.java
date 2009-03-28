@@ -15,7 +15,6 @@ import batman.messaging.message.IMessage;
 import batman.messaging.message.OrderMessage;
 import batman.messaging.message.RequestBlockMessage;
 import batman.pathfinding.WalkResult;
-import batman.strategy.policy.CollisionPolicy;
 import batman.unit.state.ArchonState;
 import batman.unit.state.UnitState;
 import batman.utils.MapUtils;
@@ -59,7 +58,7 @@ public class Archon extends Unit
 		groupArchons();
 
 		if (myIdx != 0 && myIdx != 1) {
-			rc.suicide();
+//			rc.suicide();
 		} else {
 			debug_print("leader: %d", leaderIdx);
 		}
@@ -206,12 +205,6 @@ public class Archon extends Unit
 				if (wr != WalkResult.Walking) {
 					targetLoc = curLoc;
 				}
-			/*
-			if (wr == WalkResult.Finished) {
-			targetLoc = curLoc;
-			} else if(wr == WalkResult.CannotReachLoc) {
-
-			}*/
 			}
 
 		} else { //follow
@@ -227,17 +220,45 @@ public class Archon extends Unit
 		MapLocation targetLoc = curLoc;
 
 		yieldMediumBC();
-		for (Robot robot : rc.senseNearbyAirRobots()) {
-			if (robot.getID() == archonIds[leaderIdx]) {
+		try {
+			boolean found = false;
+			for (Robot robot : rc.senseNearbyAirRobots()) {
+				if (robot.getID() == archonIds[leaderIdx]) {
 
-				targetLoc = rc.senseRobotInfo(robot).location;
+					targetLoc = rc.senseRobotInfo(robot).location;
 
-				for (int i = 1; targetLoc.distanceSquaredTo(refreshLocation()) > 3 && i <= 4; i++) {
-					moveArmy(targetLoc);
+					for (int i = 1; targetLoc.distanceSquaredTo(refreshLocation()) > 3 && i <= 4; i++) {
+						moveArmy(targetLoc);
+					}
+					found = true;
+					break;
 				}
-				break;
+				handleInts();
 			}
-			handleInts();
+
+			if (found == false) { //?
+				//COPY PASTE
+				if (targetLoc.equals(refreshLocation())) {
+					Direction fluxDir = rc.senseDirectionToUnownedFluxDeposit();
+					if (fluxDir != Direction.NONE && fluxDir != Direction.OMNI) {
+						targetLoc = refreshLocation().add(fluxDir);
+					} else {
+						targetLoc = MapUtils.randLocRange(curLoc, 25, 25, rand); //TODO_
+					}
+					rc.setIndicatorString(2, String.format("leader: new loc: %s -> %s", refreshLocation(), targetLoc));
+				} else {
+					WalkResult wr = moveArmy(targetLoc);
+					if (wr != WalkResult.Walking) {
+						targetLoc = curLoc;
+					}
+				}
+
+			}
+
+		} catch (Exception e) {
+			debug_print("ZLE");
+			e.printStackTrace();
+
 		}
 
 		return targetLoc;
@@ -272,6 +293,7 @@ public class Archon extends Unit
 			}
 		}
 		if (!state.beFollower) {
+			waitForFollower();
 			for (int k = 1; k <= 30; k++) {
 				int count = 0;
 				refreshLocation();
@@ -335,17 +357,23 @@ public class Archon extends Unit
 			rc.yield();
 
 			//wait for second archon
-			for (Robot robot : rc.senseNearbyAirRobots()) {
-				if (robot.getID() == archonIds[pairIdx]) {
-					MapLocation archonLoc = rc.senseRobotInfo(robot).location;
-					for (int j = 1; archonLoc.distanceSquaredTo(refreshLocation()) > 2 && j <= 4; j++) {
-						sleep(1);
-					}
-					break;
-				}
-			}
+			waitForFollower();
 
 		}
+	}
+
+	protected void waitForFollower() throws GameActionException
+	{
+		for (Robot robot : rc.senseNearbyAirRobots()) {
+			if (robot.getID() == archonIds[pairIdx]) {
+				MapLocation archonLoc = rc.senseRobotInfo(robot).location;
+				for (int j = 1; archonLoc.distanceSquaredTo(refreshLocation()) > 2 && j <= 6; j++) {
+					sleep(1);
+				}
+				break;
+			}
+		}
+
 	}
 
 	private final void findFlux() throws GameActionException
@@ -428,7 +456,7 @@ public class Archon extends Unit
 	protected boolean buildUnit(RobotType type)
 	{
 		try {
-			if (!hasEnergon(type.spawnCost()+2.0)) {
+			if (!hasEnergon(type.spawnCost() + 2.0)) {
 				debug_print("cannot spawn unit: not enough energon");
 				return false;
 			}
@@ -520,9 +548,11 @@ public class Archon extends Unit
 			state.captureingFlux = false;
 		}
 
+		/*
 		if (rand.nextInt(10) == 0) {
-			updateMap();
+		updateMap();
 		}
+		 */
 
 		if (state.buildSoldiers && timeNow % 20 <= (state.closeCombat ? 2 : 3)) {
 			buildSoldiersIfNeeded();
@@ -588,7 +618,7 @@ public class Archon extends Unit
 
 			MapLocation enemyLoc = enemies.get(0).location;
 			for (RobotInfo ri : enemies) {
-				if(curLoc.distanceSquaredTo(ri.location) < curLoc.distanceSquaredTo(enemyLoc)) {
+				if (curLoc.distanceSquaredTo(ri.location) < curLoc.distanceSquaredTo(enemyLoc)) {
 					enemyLoc = ri.location;
 				}
 			}

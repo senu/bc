@@ -50,7 +50,7 @@ public class Soldier extends Unit
 		for (;;) {
 			handleInts();
 			rc.yield();
-			updateMap();
+//			updateMap();
 			//rc.yield();
 			if (!state.orderQueue.isEmpty()) {
 //				debug_print("begin of execute");
