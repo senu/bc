@@ -129,7 +129,7 @@ public class Soldier extends Unit
 			return;
 		}
 
-		List<RobotInfo> enemies = getEnemyGroundUnits();
+		List<RobotInfo> enemies = getEnemies();
 		yieldAtt();
 		for (RobotInfo enemy : enemies) {
 			if (rc.canAttackSquare(enemy.location)) {
@@ -138,6 +138,7 @@ public class Soldier extends Unit
 				} else {
 					rc.attackGround(enemy.location);
 				}
+				rc.yield();
 				break;
 			}
 		}

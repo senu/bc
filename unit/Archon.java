@@ -23,7 +23,6 @@ import battlecode.common.Clock;
 import battlecode.common.GameConstants;
 import battlecode.common.Robot;
 import battlecode.common.RobotInfo;
-import battlecode.common.RobotLevel;
 import battlecode.common.TerrainTile;
 import battlecode.common.TerrainTile.TerrainType;
 import java.util.ArrayList;
@@ -47,6 +46,8 @@ public class Archon extends Unit
 		super(rc);
 		policy.minUnitEnergonLevel_Feed = StrategyConstants.ARCHON_MIN_ENERGON_LEVEL;
 		policy.healIfWeakerThan = 0.6;
+		state.closeCombat = false;
+		state.buildSoldiers = false;
 	}
 
 	public final void beYourself() throws GameActionException
@@ -55,7 +56,7 @@ public class Archon extends Unit
 
 		groupArchons();
 		if (myIdx != 0 && myIdx != 1) {
-			rc.suicide();
+//			rc.suicide();
 		} else {
 			debug_print("leader: %d", leaderIdx);
 		}
@@ -63,12 +64,16 @@ public class Archon extends Unit
 //			rc.suicide();
 		}
 
-		MapLocation startLoc = MapUtils.add(refreshLocation(), 15 + leaderIdx * 2, leaderIdx);
+		MapLocation startLoc = MapUtils.add(refreshLocation(), 5 + leaderIdx * 2, leaderIdx * 2 + 2);
 		rc.setIndicatorString(0, "go Start");
 
 		for (int i = 0; i < 180; i++) {
-			if (stupidWalkStep(startLoc) != WalkResult.Walking) {
-				break;
+			if (state.followLeader) {
+				followTheLeader();
+			} else {
+				if (stupidWalkStep(startLoc) != WalkResult.Walking) {
+					break;
+				}
 			}
 			handleInts();
 		}
@@ -116,19 +121,6 @@ public class Archon extends Unit
 
 		state.buildSoldiers = true;
 
-//				RobotPolicy rp = new RobotPolicy();
-//				rp.hungerPolicy = HungerPolicy.HungryAt35;
-//				Order order1 = new ChangeRobotPolicyOrder(rp);
-//				Order order2 = new PathFindMoveOrder(MapUtils.randLocRange(refreshLocation(), 3, 3, rand));
-////			Order order3 = new PathFindMoveOrder(MapUtils.add(curLoc, 5, 5));
-//
-//				OrderGroup group = new OrderGroup();
-//				group.orders.add(order1);
-//				group.orders.add(order2);
-////			group.orders.add(order3);
-//
-//				rc.broadcast(new OrderMessage(group).finalSerialize());
-//				rc.yield();
 		for (int loop = 0;; loop++) {
 			handleInts();
 			rc.yield();
@@ -155,40 +147,60 @@ public class Archon extends Unit
 			}
 		}
 
+
 		MapLocation targetLoc = refreshLocation();
-
 		for (int loop = 0;; loop++) {
-			if (!state.followLeader) { //lead
-				if (targetLoc.equals(refreshLocation())) {
-					Direction fluxDir = rc.senseDirectionToOwnedFluxDeposit();
-					if (fluxDir != Direction.NONE && fluxDir != Direction.OMNI) {
-						targetLoc = refreshLocation().add(fluxDir);
-					} else {
-						targetLoc = MapUtils.randLocRange(curLoc, 25, 25, rand);
-					}
-				} else {
-					if (moveArmy(targetLoc) != WalkResult.Walking) {
-						targetLoc = curLoc;
-					}
-				}
-
-			} else { //follow
-				for (Robot robot : rc.senseNearbyAirRobots()) {
-					if (robot.getID() == archonIds[leaderIdx]) {
-
-						targetLoc = rc.senseRobotInfo(robot).location;
-
-						if (targetLoc.distanceSquaredTo(refreshLocation()) > 2) {
-							moveArmy(targetLoc);
-						}
-						break;
-					}
-				}
-
+			if (!state.closeCombat) {
+				targetLoc = findAndDestroy(targetLoc);
 			}
+
 			handleInts();
 		}
 
+	}
+
+	protected MapLocation findAndDestroy(MapLocation targetLoc) throws GameActionException
+	{
+
+		if (!state.followLeader) { //lead
+			if (targetLoc.equals(refreshLocation())) {
+				Direction fluxDir = rc.senseDirectionToOwnedFluxDeposit();
+				if (fluxDir != Direction.NONE && fluxDir != Direction.OMNI) {
+					targetLoc = refreshLocation().add(fluxDir);
+				} else {
+					targetLoc = MapUtils.randLocRange(curLoc, 25, 25, rand);
+				}
+			} else {
+				if (moveArmy(targetLoc) != WalkResult.Walking) {
+					targetLoc = curLoc;
+				}
+			}
+
+		} else { //follow
+			targetLoc = followTheLeader(); //with army
+		}
+
+		return targetLoc;
+
+	}
+
+	protected MapLocation followTheLeader() throws GameActionException
+	{
+		MapLocation targetLoc = curLoc;
+
+		for (Robot robot : rc.senseNearbyAirRobots()) {
+			if (robot.getID() == archonIds[leaderIdx]) {
+
+				targetLoc = rc.senseRobotInfo(robot).location;
+
+				if (targetLoc.distanceSquaredTo(refreshLocation()) > 2) {
+					moveArmy(targetLoc);
+				}
+				break;
+			}
+		}
+
+		return targetLoc;
 	}
 
 	protected WalkResult moveArmy(MapLocation targetLoc) throws GameActionException
@@ -204,7 +216,7 @@ public class Archon extends Unit
 		ret = stupidWalkStep(targetLoc);
 		if (!state.followLeader) {
 			rc.broadcast(new OrderMessage(order).finalSerialize());
-			sleep(8);
+			sleep(6);
 		}
 
 		return ret;
@@ -408,6 +420,7 @@ public class Archon extends Unit
 
 	protected final void handleInts() throws GameActionException
 	{
+//		rc.setIndicatorString(0, Boolean.toString(state.closeCombat));
 		timeNow = Clock.getRoundNum();
 
 		handleIntsDepth++;
@@ -440,17 +453,18 @@ public class Archon extends Unit
 
 	protected void checkAndHandleCombat() throws GameActionException
 	{
-		yieldHalfBC();
-		List<RobotInfo> enemies = getEnemyGroundUnits();
+//		debug_print("check and handle combat");
+		yieldMediumBC();
+		List<RobotInfo> enemies = getEnemies();
 		if (!enemies.isEmpty()) {
 			if (!state.closeCombat) {
 				state.closeCombat = true;
 				policy.minUnitEnergonLevel_Feed = 50;
-				MapLocation enemyLoc = enemies.get(0).location;
-				rc.broadcast(new OrderMessage(new AttackMoveOrder(enemyLoc)).finalSerialize());
-				rc.yield(); //TODO to trwa 2 tury
-				stupidWalkStep(enemyLoc);
 			}
+			MapLocation enemyLoc = enemies.get(0).location;
+			rc.broadcast(new OrderMessage(new AttackMoveOrder(enemyLoc)).finalSerialize());
+			rc.yield(); //TODO to trwa 2 tury
+			stupidWalkStep(enemyLoc);
 		} else {
 			state.closeCombat = false;
 			policy.minUnitEnergonLevel_Feed = StrategyConstants.ARCHON_MIN_ENERGON_LEVEL;

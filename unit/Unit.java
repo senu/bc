@@ -176,7 +176,10 @@ public abstract class Unit
 	/** Czekaj, az ruch sie nie skonczy. */
 	protected final void yieldMv()
 	{
-		while (rc.isMovementActive()) {
+		/*while (rc.isMovementActive()) {
+			rc.yield();
+		}*/
+		while (rc.isAttackActive() || rc.isMovementActive()) {
 			rc.yield();
 		}
 	}
@@ -310,7 +313,7 @@ public abstract class Unit
 		if (refreshLocation().equals(nextLoc)) {
 			return WalkResult.Finished;
 		}
-		yieldMv();
+		yieldAtt();
 
 		//nextLoc = a_star_loc(curLoc, nextLoc); //TODO
 
@@ -320,6 +323,7 @@ public abstract class Unit
 			yieldSmallBC();
 			rc.setDirection(nextDir);
 			rc.yield();
+			yieldAtt();
 
 			if (rc.canMove(rc.getDirection())) {
 				rc.moveForward();
@@ -328,7 +332,7 @@ public abstract class Unit
 			}
 
 			rc.yield();
-			yieldMv();
+			yieldAtt();
 		} else {
 			if (rc.canSenseSquare(nextLoc) && rc.senseGroundRobotAtLocation(nextLoc) == null) {
 				map.setTile(nextLoc, new MapTile(MapTile.LocState.Bad)); //TODO to blokuje pole na zawsze, gdy stoi tam robot
@@ -605,6 +609,12 @@ public abstract class Unit
 		}
 
 		return ret;
+	}
+
+	protected ArrayList<RobotInfo> getEnemies() throws GameActionException
+	{
+		yieldMediumBC();
+		return getEnemyAirUnits(getEnemyGroundUnits());
 	}
 
 	protected void handleMapTransfer(MapTransferResponseMessage msg)
