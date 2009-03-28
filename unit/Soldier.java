@@ -44,7 +44,6 @@ public class Soldier extends Unit
 		return state;
 	}
 
-
 	@Override
 	public void beYourself() throws GameActionException
 	{
@@ -61,13 +60,19 @@ public class Soldier extends Unit
 		}
 	}
 
-
 	protected void processMessages() throws GameActionException
 	{
 		for (IMessage inMsg : getMessages()) {
 			if (inMsg instanceof OrderMessage) {
 				OrderMessage msg = (OrderMessage) inMsg;
+				if (state.orderQueue.size() > 3) {
+					state.orderQueue.clear();
+				}
 				state.orderQueue.add(msg.order);
+				//TODO_
+				if (state.orderQueue.size() > 4) {
+					debug_print("orderQueue: %s %d", state.orderQueue, state.orderQueue.size());
+				}
 			} else if (inMsg instanceof MapTransferResponseMessage) {
 				handleMapTransfer((MapTransferResponseMessage) inMsg);
 				debug_print("got map transfer");
@@ -125,10 +130,7 @@ public class Soldier extends Unit
 	{
 		policy.enemySpottedPolicy = EnemySpottedPolicy.FireAtWill;
 
-		for (int i = 0; i < 20; i++) {
-			stupidWalkStep(where);
-			handleInts();
-		}
+		stupidWalkGoTo(where, CollisionPolicy.GoRound);
 
 		return ExecutionResult.OK;
 	}

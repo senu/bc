@@ -546,21 +546,29 @@ public abstract class Unit
 
 		try {
 			for (Message m : msgs) {
-				if (m.ints[0] != 123456789) {
+				if (m == null || m.ints == null|| m.ints[0] != 123456788) {
 					continue;
 				}
 
+				IMessage newMsg = null;
 				int type = m.ints[1];
-				IMessage newMsg = ((IMessage) messageTypes.get(type).newInstance());
+				newMsg = ((IMessage) messageTypes.get(type).newInstance());
+				if (newMsg == null) {
+					debug_print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAa");
+				}
+
+				if (newMsg.getRecipient() == null) {
+					debug_print("AXXXXAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAa");
+				}
 
 				if (!checkRecipient(newMsg.getRecipient())) {
 					continue;
 				}
-
 				newMsg.finalDeserialize(m);
 				ret.add(newMsg);
 			}
 		} catch (Exception e) {
+			debug_print("tutaj: ");
 			e.printStackTrace();
 		}
 
@@ -575,6 +583,7 @@ public abstract class Unit
 
 	protected List<RobotInfo> getAlliedGroundUnits() throws GameActionException
 	{
+		yieldMediumBC();
 		ArrayList<RobotInfo> ret = new ArrayList<RobotInfo>(10);
 		for (Robot robot : rc.senseNearbyGroundRobots()) {
 			RobotInfo ri = rc.senseRobotInfo(robot);
@@ -586,9 +595,13 @@ public abstract class Unit
 		return ret;
 	}
 
-	protected ArrayList<RobotInfo> getEnemyGroundUnits() throws GameActionException
+	protected ArrayList<RobotInfo> getEnemyGroundUnits(
+			ArrayList<RobotInfo> appendTo) throws GameActionException
 	{
-		ArrayList<RobotInfo> ret = new ArrayList<RobotInfo>(10);
+		ArrayList<RobotInfo> ret = appendTo;
+		if (appendTo == null) {
+			ret = new ArrayList<RobotInfo>(10);
+		}
 		for (Robot robot : rc.senseNearbyGroundRobots()) {
 			RobotInfo ri = rc.senseRobotInfo(robot);
 			if (ri.team != myTeam) {
@@ -621,7 +634,7 @@ public abstract class Unit
 	protected ArrayList<RobotInfo> getEnemies() throws GameActionException
 	{
 		yieldHalfBC();
-		return getEnemyAirUnits(getEnemyGroundUnits());
+		return getEnemyGroundUnits(getEnemyAirUnits(null));
 	}
 
 	protected void handleMapTransfer(MapTransferResponseMessage msg)

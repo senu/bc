@@ -59,7 +59,7 @@ public class Archon extends Unit
 		groupArchons();
 
 		if (myIdx != 0 && myIdx != 1) {
-			rc.suicide();
+//			rc.suicide();
 		} else {
 			debug_print("leader: %d", leaderIdx);
 		}
@@ -428,7 +428,7 @@ public class Archon extends Unit
 	protected boolean buildUnit(RobotType type)
 	{
 		try {
-			if (!hasEnergon(type.spawnCost())) {
+			if (!hasEnergon(type.spawnCost()+10.0)) {
 				debug_print("cannot spawn unit: not enough energon");
 				return false;
 			}
@@ -524,7 +524,7 @@ public class Archon extends Unit
 			updateMap();
 		}
 
-		if (state.buildSoldiers && timeNow % 16 <= (state.closeCombat ? 0 : 2)) {
+		if (state.buildSoldiers && timeNow % 20 <= (state.closeCombat ? 4 : 5)) {
 			buildSoldiersIfNeeded();
 		}
 
@@ -585,11 +585,26 @@ public class Archon extends Unit
 			 */
 			}
 
+
 			MapLocation enemyLoc = enemies.get(0).location;
-			rc.broadcast(new OrderMessage(new AttackMoveOrder(enemyLoc)).finalSerialize());
-			rc.yield(); //TODO to trwa 2 tury
-			if (rand.nextInt() % 5 == 0) {
-				stupidWalkStep(enemyLoc);
+			for (RobotInfo ri : enemies) {
+				if(curLoc.distanceSquaredTo(ri.location) < curLoc.distanceSquaredTo(enemyLoc)) {
+					enemyLoc = ri.location;
+				}
+			}
+
+			if (rand.nextInt() % 6 == 0) {
+				rc.broadcast(new OrderMessage(new AttackMoveOrder(enemyLoc)).finalSerialize());
+				rc.yield(); //TODO to trwa 2 tury
+			}
+			if (refreshLocation().distanceSquaredTo(enemyLoc) <= 5) {
+				if (health() < 0.40) {
+					stupidWalkStep(curLoc.add(curLoc.directionTo(enemyLoc).opposite()));
+				}
+			} else {
+				if (rand.nextInt() % 10 == 0) {
+					stupidWalkStep(enemyLoc);
+				}
 			}
 		} else {
 			state.closeCombat = false;

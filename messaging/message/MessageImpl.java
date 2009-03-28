@@ -45,7 +45,7 @@ public abstract class MessageImpl implements IMessage
 	{
 		MutableMessage m = new MutableMessage();
 //		m.strings.add(this.getClass().getName());
-		m.ints.add(123456789);
+		m.ints.add(123456788);
 		m.ints.add(getMessageType());
 		m.ints.add(round);
 		m.ints.add(priority);
