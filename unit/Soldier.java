@@ -8,6 +8,7 @@ import batman.messaging.message.HungerMessage;
 import batman.messaging.message.IMessage;
 import batman.messaging.message.MapTransferResponseMessage;
 import batman.messaging.message.OrderMessage;
+import batman.strategy.policy.CollisionPolicy;
 import batman.strategy.policy.EnemySpottedPolicy;
 import batman.strategy.policy.HungerPolicy;
 import batman.unit.state.SoldierState;
@@ -29,7 +30,8 @@ public class Soldier extends Unit
 	public Soldier(RobotController rc)
 	{
 		super(rc);
-		policy.hungerPolicy=HungerPolicy.HungryAt50;
+		policy.hungerPolicy = HungerPolicy.HungryAt50;
+		policy.collisionPolicy = CollisionPolicy.AlwaysWait;
 	}
 
 	@Override
@@ -114,6 +116,7 @@ public class Soldier extends Unit
 
 	protected final void handleInts() throws GameActionException
 	{
+		handleIntsDepth++;
 		rc.setIndicatorString(0, "handleInts");
 		rc.setIndicatorString(1, policy.hungerPolicy.toString());
 
@@ -133,6 +136,7 @@ public class Soldier extends Unit
 		}
 
 		processMessages();
+		handleIntsDepth--;
 
 	}
 

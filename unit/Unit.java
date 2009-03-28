@@ -18,6 +18,7 @@ import batman.pathfinding.GameMap;
 import batman.pathfinding.MapTile;
 import batman.pathfinding.Path;
 import batman.strategy.RobotPolicy;
+import batman.strategy.policy.MapRefreshPolicy;
 import batman.utils.SimpleRobotInfo;
 import battlecode.common.Clock;
 import battlecode.common.Direction;
@@ -48,8 +49,10 @@ public abstract class Unit
 	protected MapLocation curLoc;
 	protected GameMap map = new GameMap();
 	protected Team myTeam;
-	public RobotPolicy policy = new RobotPolicy();
+	public RobotPolicy policy;
 	protected Map<Integer, Class> messageTypes = new HashMap<Integer, Class>();
+	protected int handleIntsDepth = 0;
+	protected int timeNow; //niekoniecznie aktualny numer rundy (mapa)
 
 	//TODO remove
 	class LocStatus
@@ -64,7 +67,7 @@ public abstract class Unit
 		this.rc = rc;
 		this.rand.setSeed(rc.getRobot().getID());
 		this.myTeam = rc.getTeam();
-
+		this.policy = new RobotPolicy(rand);
 
 		//TODO tak sie tego nie robi
 		Class[] messageClasses = new Class[]{
@@ -103,7 +106,7 @@ public abstract class Unit
 
 	protected final void debug_print(String format, Object... args)
 	{
-		System.out.printf(rc.getRobot().getID() + " " + format + "\n", args);
+		System.out.printf(rc.getRobot().getID() + " [" + Integer.toString(handleIntsDepth) + "]" + format + "\n", args);
 	}
 
 	protected final void ping() throws GameActionException
@@ -120,21 +123,32 @@ public abstract class Unit
 	}
 
 	/** Zwraca rowniez zle lokacje (poza mapa). */
-	public List<MapLocation> getLocsInSensorRange() throws GameActionException
+	public List<MapLocation> getLocsInSensorRange(MapRefreshPolicy mapPolicy) throws GameActionException
 	{
-		List<MapLocation> retLocs = new ArrayList<MapLocation>();
+		List<MapLocation> retLocs = new ArrayList<MapLocation>(30);
 		int range = rc.getRobotType().sensorRadius();
 		refreshLocation();
 		MapLocation mxy = new MapLocation(curLoc.getX() - range, curLoc.getY() - range); //minimum
 
+		int currentRound = Clock.getRoundNum(), mapTileRound;
+		MapTile tile;
 		//TODO angle
 		for (MapLocation mx = mxy; mx.getY() - mxy.getY() <= 2 * range; mx = mx.add(Direction.SOUTH)) {
 			for (MapLocation loc = mx; loc.getX() - mxy.getX() <= 2 * range; loc = loc.add(Direction.EAST)) {
-
-				if (rc.canSenseSquare(loc)) {
-					retLocs.add(loc);
+				tile = map.getTile(loc);
+				if (tile != null) {
+					mapTileRound = tile.roundSeen;
+				} else {
+					mapTileRound = 0;
 				}
-
+				if (currentRound - mapTileRound > mapPolicy.refreshWhenOlderThan) {  //TODO unknown
+//					debug_print("do scanLoc: %d, %d", currentRound, mapTileRound);
+					if (rc.canSenseSquare(loc)) {
+						retLocs.add(loc);
+					}
+				} else {
+//					debug_print("skipped scanLoc: %s", loc.toString());
+				}
 			}
 		}
 		return retLocs;
@@ -209,6 +223,7 @@ public abstract class Unit
 			if (refreshLocation().equals(targetLoc)) {
 				return ExecutionResult.OK;
 			}
+			nextDirection = curLoc.directionTo(targetLoc);
 
 			if (nextDirection == curDirection.opposite()) { //nie chcemy sie cofac
 				nextDirection = curDirection;
@@ -219,7 +234,11 @@ public abstract class Unit
 			}
 
 			for (int j = 1; !rc.canMove(nextDirection) && j <= 4; j++) { // kolejna przeszkoda - omijamy idac lewej
-				nextDirection = nextDirection.rotateLeft();
+				if (policy.stupidWalkTurnLeft) {
+					nextDirection = nextDirection.rotateLeft();
+				} else {
+					nextDirection = nextDirection.rotateRight();
+				}
 			}
 
 			curDirection = nextDirection;
@@ -258,7 +277,6 @@ public abstract class Unit
 			rc.yield();
 			yieldMv();
 		} else {
-//			debug_print("bad loc");
 			if (rc.canSenseSquare(nextLoc) && rc.senseGroundRobotAtLocation(nextLoc) == null) {
 				map.setTile(nextLoc, new MapTile(MapTile.LocState.Bad)); //TODO to blokuje pole na zawsze, gdy stoi tam robot
 			}
@@ -269,12 +287,13 @@ public abstract class Unit
 	protected void updateMap() throws GameActionException
 	{
 		int rstart = Clock.getRoundNum();
-		List<MapLocation> locs = getLocsInSensorRange();
+		timeNow = rstart;
+		List<MapLocation> locs = getLocsInSensorRange(policy.mapRefreshPolicy);
 		for (MapLocation loc : locs) {
 			map.setTile(loc, scanLoc(loc));
 		}
 
-//		debug_print("updateMap took:%d", Clock.getRoundNum() - rstart);
+//		debug_print("updateMap took: %d", Clock.getRoundNum() - rstart);
 	}
 
 	protected final MapTile scanLoc(MapLocation loc) throws GameActionException
@@ -312,6 +331,7 @@ public abstract class Unit
 
 		tile.blockCount = rc.senseNumBlocksAtLocation(loc);
 		tile.height = tt.getHeight();
+		tile.roundSeen = timeNow;
 
 		return tile;
 	}

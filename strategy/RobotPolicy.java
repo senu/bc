@@ -8,9 +8,11 @@ import batman.messaging.serialization.ISerializable;
 import batman.messaging.serialization.MutableMessage;
 import batman.messaging.serialization.SerializationIterator;
 import batman.strategy.policy.AttackTargetingPolicy;
+import batman.strategy.policy.CollisionPolicy;
 import batman.strategy.policy.EnemySpottedPolicy;
 import batman.strategy.policy.HungerPolicy;
 import batman.strategy.policy.MapRefreshPolicy;
+import java.util.Random;
 
 /**
  *
@@ -22,13 +24,17 @@ public class RobotPolicy implements ISerializable
 	public EnemySpottedPolicy enemySpottedPolicy;
 	public MapRefreshPolicy mapRefreshPolicy;
 	public AttackTargetingPolicy attackTargetingPolicy;
+	public CollisionPolicy collisionPolicy;
+	public boolean stupidWalkTurnLeft;
 
-	public RobotPolicy()
+	public RobotPolicy(Random rand)
 	{
 		hungerPolicy = HungerPolicy.HungryAt35;
 		enemySpottedPolicy = EnemySpottedPolicy.AttackIfWeaker;
-		mapRefreshPolicy = MapRefreshPolicy.FullScanModerately;
+		mapRefreshPolicy = MapRefreshPolicy.OldScanModerately;
 		attackTargetingPolicy = AttackTargetingPolicy.AttackCloser;
+		collisionPolicy = CollisionPolicy.GoRound;
+		stupidWalkTurnLeft = rand.nextBoolean();
 	}
 
 	public void deserialize(SerializationIterator it)
