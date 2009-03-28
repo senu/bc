@@ -220,7 +220,8 @@ public abstract class Unit
 
 	/** Jezeli targetLoc == null, to szuka archona */
 	public ExecutionResult stupidWalkGoTo(MapLocation targetLoc,
-			CollisionPolicy colPolicy) throws GameActionException
+			CollisionPolicy colPolicy)
+			throws GameActionException
 	{
 		boolean searchArchon = (targetLoc == null);
 		//debug_print("stupidWalkGo %s", searchArchon ? "NULL" : targetLoc.toString());
@@ -247,8 +248,9 @@ public abstract class Unit
 			}
 			nextDirection = curLoc.directionTo(targetLoc);
 
+
 			if (nextDirection == curDirection.opposite()) { //nie chcemy sie cofac
-				if (i % 4 == 0) {
+				if (i % 2 == 0) {
 					nextDirection = stupidTurnLeftOrRight(curDirection);
 				} else {
 					nextDirection = curDirection;
@@ -528,7 +530,7 @@ public abstract class Unit
 
 	public ExecutionResult sleep(int howLong) throws GameActionException
 	{
-		rc.setIndicatorString(0, "sleep");
+//		rc.setIndicatorString(0, "sleep");
 		for (int i = 1; i <= howLong; i++) {
 			rc.yield();
 			handleInts();

@@ -15,6 +15,7 @@ import batman.messaging.message.IMessage;
 import batman.messaging.message.OrderMessage;
 import batman.messaging.message.RequestBlockMessage;
 import batman.pathfinding.WalkResult;
+import batman.strategy.policy.CollisionPolicy;
 import batman.unit.state.ArchonState;
 import batman.unit.state.UnitState;
 import batman.utils.MapUtils;
@@ -58,7 +59,7 @@ public class Archon extends Unit
 		groupArchons();
 
 		if (myIdx != 0 && myIdx != 1) {
-//			rc.suicide();
+			rc.suicide();
 		} else {
 			debug_print("leader: %d", leaderIdx);
 		}
@@ -69,7 +70,7 @@ public class Archon extends Unit
 //		MapLocation startLoc = MapUtils.add(refreshLocation(), 7 + leaderIdx *3/2, leaderIdx * 3/2 + 5);
 		rc.setIndicatorString(0, "go Start");
 
-		if (!state.followLeader) {
+		if (!state.beFollower) {
 			for (Direction dir : MapUtils.movableDirections) {
 				if (rc.canMove(dir)) {
 					rc.setDirection(dir);
@@ -125,7 +126,7 @@ public class Archon extends Unit
 				} else {
 					pairIdx = i - 1;
 					leaderIdx = pairIdx;
-					state.followLeader = true;
+					state.beFollower = true;
 					rc.setIndicatorString(2, "follower");
 				}
 				break;
@@ -169,18 +170,18 @@ public class Archon extends Unit
 		 *
 		 */
 
-		if (!state.followLeader) {
+		if (!state.beFollower) {
 			findFlux();
 		}
 
 		MapLocation targetLoc = refreshLocation();
 		for (int loop = 0;; loop++) {
 			if (!state.closeCombat) {
-				if (state.followLeader) {
+				if (state.beFollower) {
 					followTheLeader();
 				} else {
-					rc.setIndicatorString(1, String.format("fad: %s -> %s", refreshLocation(), targetLoc));
 					targetLoc = findAndDestroy(targetLoc);
+					rc.setIndicatorString(1, String.format("fad: %s -> %s", refreshLocation(), targetLoc));
 				}
 			}
 
@@ -191,18 +192,26 @@ public class Archon extends Unit
 
 	protected MapLocation findAndDestroy(MapLocation targetLoc) throws GameActionException
 	{
-		if (!state.followLeader) { //lead
+		if (!state.beFollower) { //lead
 			if (targetLoc.equals(refreshLocation())) {
 				Direction fluxDir = rc.senseDirectionToUnownedFluxDeposit();
 				if (fluxDir != Direction.NONE && fluxDir != Direction.OMNI) {
 					targetLoc = refreshLocation().add(fluxDir);
 				} else {
-					targetLoc = MapUtils.randLocRange(curLoc, 25, 25, rand);
+					targetLoc = MapUtils.randLocRange(curLoc, 25, 25, rand); //TODO_
 				}
+				rc.setIndicatorString(2, String.format("leader: new loc: %s -> %s", refreshLocation(), targetLoc));
 			} else {
-				if (moveArmy(targetLoc) != WalkResult.Walking) {
+				WalkResult wr = moveArmy(targetLoc);
+				if (wr != WalkResult.Walking) {
 					targetLoc = curLoc;
 				}
+			/*
+			if (wr == WalkResult.Finished) {
+			targetLoc = curLoc;
+			} else if(wr == WalkResult.CannotReachLoc) {
+
+			}*/
 			}
 
 		} else { //follow
@@ -244,10 +253,41 @@ public class Archon extends Unit
 		}
 
 		Order order = new SimpleMoveOrder(groundLoc);
-		ret = stupidWalkStep(targetLoc);
-		if (!state.followLeader) {
-			rc.broadcast(new OrderMessage(order).finalSerialize());
-			sleep(6);
+//		stupidWalk(groundLoc, CollisionPolicy.GoRound); //TODO_
+//		ret = WalkResult.Walking;
+		ret = stupidWalkStep(targetLoc); //TODO_
+		if (ret == WalkResult.CannotReachLoc) {
+			yieldSmallBC();
+			for (Direction dir : MapUtils.movableDirections) {
+				if (rc.canMove(dir)) {
+					rc.setDirection(dir);
+					rc.yield();
+					if (rc.canMove(rc.getDirection())) {
+						rc.moveForward();
+						rc.yield();
+						yieldMv();
+						break;
+					}
+				}
+			}
+		}
+		if (!state.beFollower) {
+			for (int k = 1; k <= 30; k++) {
+				int count = 0;
+				refreshLocation();
+				for (RobotInfo ri : getAlliedGroundUnits()) {
+					if (ri.location.distanceSquaredTo(curLoc) <= 3) {
+						count++;
+					}
+				}
+				if (count >= 5) {
+					break;
+				}
+				order = new SimpleMoveOrder(refreshLocation());
+				rc.broadcast(new OrderMessage(order).finalSerialize());
+				rc.setIndicatorString(0, String.format("s sleep: %d %s %s --> %s", Clock.getRoundNum(), ret.toString(), refreshLocation(), targetLoc));
+				sleep(1);
+			}
 		}
 
 		return ret;
@@ -464,7 +504,7 @@ public class Archon extends Unit
 
 		checkAndHandleCombat();
 
-		if (!state.closeCombat && !state.followLeader && !state.captureingFlux) { //zajmij flux, by nam nie bruzdzil :)
+		if (!state.closeCombat && !state.beFollower && !state.captureingFlux) { //zajmij flux, by nam nie bruzdzil :)
 			for (FluxDeposit dep : rc.senseNearbyFluxDeposits()) {
 				FluxDepositInfo fdi = rc.senseFluxDepositInfo(dep);
 				if (fdi.team != myTeam) {
@@ -531,7 +571,7 @@ public class Archon extends Unit
 		if (!enemies.isEmpty()) {
 			if (!state.closeCombat) {
 				state.closeCombat = true;
-				policy.minUnitEnergonLevel_Feed = 50;
+				policy.minUnitEnergonLevel_Feed = 22;
 				state.buildSoldiers = true;
 
 			/*
@@ -548,7 +588,9 @@ public class Archon extends Unit
 			MapLocation enemyLoc = enemies.get(0).location;
 			rc.broadcast(new OrderMessage(new AttackMoveOrder(enemyLoc)).finalSerialize());
 			rc.yield(); //TODO to trwa 2 tury
-			stupidWalkStep(enemyLoc);
+			if (rand.nextInt() % 5 == 0) {
+				stupidWalkStep(enemyLoc);
+			}
 		} else {
 			state.closeCombat = false;
 			policy.minUnitEnergonLevel_Feed = StrategyConstants.ARCHON_MIN_ENERGON_LEVEL;
