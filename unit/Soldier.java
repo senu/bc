@@ -13,6 +13,7 @@ import batman.strategy.policy.CollisionPolicy;
 import batman.strategy.policy.EnemySpottedPolicy;
 import batman.strategy.policy.HungerPolicy;
 import batman.unit.state.SoldierState;
+import batman.unit.state.UnitState;
 import battlecode.common.Clock;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
@@ -38,6 +39,13 @@ public class Soldier extends Unit
 	}
 
 	@Override
+	protected UnitState getState()
+	{
+		return state;
+	}
+
+
+	@Override
 	public void beYourself() throws GameActionException
 	{
 		for (;;) {
@@ -53,51 +61,6 @@ public class Soldier extends Unit
 		}
 	}
 
-	protected void onHungry() throws GameActionException
-	{
-		/**
-		try {
-		throw new ArithmeticException();
-
-		} catch (Exception e) {
-		e.printStackTrace();
-		}
-		 */
-		rc.setIndicatorString(0, "onHungry");
-		rc.setIndicatorString(2, "onHungry");
-		for (;;) {
-//			debug_print("onHungry loop");
-			refreshLocation();
-
-			yieldIf(ByteCodeConstants.Medium);
-			MapLocation loc = nearestArchon();
-
-			if (loc != null) {
-				if (inTransferRange(loc)) {
-//					debug_print("in transfer range hungry");
-					if (--state.hungryMessageDelay <= 0) {
-						rc.broadcast(new HungerMessage(rc).finalSerialize());
-						state.hungryMessageDelay = 10;
-						rc.yield();
-					}
-					state.hungry_FindArchon = false;
-					return;
-				} else if (!state.hungry_FindArchon) {
-					rc.setIndicatorString(0, "onHungry - fp");
-					state.hungry_FindArchon = true;
-
-					stupidWalkGoTo(null, CollisionPolicy.GoRound);
-					state.hungry_FindArchon = false; //?????!
-				} else {
-					return;
-				}
-			} else {
-				debug_print("no archon");
-				return;
-			}
-		}
-
-	}
 
 	protected void processMessages() throws GameActionException
 	{

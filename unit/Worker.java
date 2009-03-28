@@ -1,14 +1,13 @@
 package batman.unit;
 
-import batman.constants.ByteCodeConstants;
-import batman.constants.StrategyConstants;
 import batman.management.executor.WorkerExecutor;
-import batman.messaging.Messages;
 import batman.messaging.Recipient;
 import batman.messaging.message.IMessage;
 import batman.messaging.message.OrderMessage;
 import batman.messaging.message.RequestBlockMessage;
 import batman.strategy.policy.custom.WorkerPolicy;
+import batman.unit.state.UnitState;
+import batman.unit.state.WorkerState;
 import batman.utils.MapUtils;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
@@ -31,6 +30,7 @@ public class Worker extends Unit
 	private MapLocation blockGoal = null;
 	protected WorkerExecutor executor = new WorkerExecutor(this);
 	public WorkerPolicy workerPolicy = WorkerPolicy.DoNothing;
+	public WorkerState state = new WorkerState();
 
 	public Worker(RobotController rc)
 	{
@@ -44,9 +44,10 @@ public class Worker extends Unit
 		for (;;) {
 			handleInts();
 
-			if (workerPolicy == WorkerPolicy.BeMedic) {
-				beMedic();
-			}
+		/*
+		if (workerPolicy == WorkerPolicy.BeMedic) {
+		beMedic();
+		}*/
 		}
 	}
 
@@ -90,30 +91,19 @@ public class Worker extends Unit
 
 	protected final void handleInts() throws GameActionException
 	{
+		handleIntsDepth++;
+		if (handleIntsDepth >= 3) {
+			throw new ArithmeticException();
+		}
+
 		rc.setIndicatorString(0, "handleInts");
 		refreshLocation();
 
-		//hunger
-		if (health() <= StrategyConstants.WORKER_HUNGER_LEVEL) {
-
-			rc.setIndicatorString(0, "hungry");
-			for (;;) {
-				curLoc = rc.getLocation();
-
-				yieldIf(ByteCodeConstants.Medium);
-				MapLocation loc = nearestArchon();
-
-				if (loc != null) {
-					if (inTransferRange(loc)) {
-						rc.broadcast(Messages.hungryMessage(rc));
-						sleep(5);
-						return;
-					} else {
-//						debug_print("hungry");
-						pathFindMove(loc);
-					}
-				}
-			}
+		if (!state.hungry_FindArchon && isHungry()) {
+//			debug_print("isHungry");
+			onHungry();
+			handleIntsDepth--;
+			return;
 		} else {
 			//orders
 			for (IMessage msg : getMessages()) {
@@ -127,6 +117,8 @@ public class Worker extends Unit
 			}
 
 		}
+
+		handleIntsDepth--;
 
 	}
 
@@ -310,5 +302,11 @@ public class Worker extends Unit
 	protected boolean checkRecipient(Recipient recipient) throws GameActionException
 	{
 		return (recipient.toWhom.flag & Recipient.RecipientType.All.flag) == Recipient.RecipientType.All.flag; //TODO medics
+	}
+
+	@Override
+	protected UnitState getState()
+	{
+		return state;
 	}
 }

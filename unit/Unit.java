@@ -21,6 +21,7 @@ import batman.pathfinding.WalkResult;
 import batman.strategy.RobotPolicy;
 import batman.strategy.policy.CollisionPolicy;
 import batman.strategy.policy.MapRefreshPolicy;
+import batman.unit.state.UnitState;
 import batman.utils.SimpleRobotInfo;
 import battlecode.common.Clock;
 import battlecode.common.Direction;
@@ -93,6 +94,8 @@ public abstract class Unit
 
 
 	}
+
+	protected abstract UnitState getState();
 
 	public abstract void beYourself() throws GameActionException;
 
@@ -216,7 +219,8 @@ public abstract class Unit
 	}
 
 	/** Jezeli targetLoc == null, to szuka archona */
-	public ExecutionResult stupidWalkGoTo(MapLocation targetLoc, CollisionPolicy colPolicy) throws GameActionException
+	public ExecutionResult stupidWalkGoTo(MapLocation targetLoc,
+			CollisionPolicy colPolicy) throws GameActionException
 	{
 		boolean searchArchon = (targetLoc == null);
 		//debug_print("stupidWalkGo %s", searchArchon ? "NULL" : targetLoc.toString());
@@ -594,7 +598,8 @@ public abstract class Unit
 		return ret;
 	}
 
-	protected ArrayList<RobotInfo> getEnemyAirUnits(ArrayList<RobotInfo> appendTo) throws GameActionException
+	protected ArrayList<RobotInfo> getEnemyAirUnits(
+			ArrayList<RobotInfo> appendTo) throws GameActionException
 	{
 		ArrayList<RobotInfo> ret = appendTo;
 		if (appendTo == null) {
@@ -613,7 +618,7 @@ public abstract class Unit
 
 	protected ArrayList<RobotInfo> getEnemies() throws GameActionException
 	{
-		yieldMediumBC();
+		yieldHalfBC();
 		return getEnemyAirUnits(getEnemyGroundUnits());
 	}
 
@@ -644,7 +649,7 @@ public abstract class Unit
 		}
 	}
 
-	protected void healSomeGroundUnits() throws GameActionException
+	protected void healSomeGroundUnits() throws GameActionException //ale nie workerow
 	{
 		try {
 			yieldSmallBC();
@@ -659,15 +664,63 @@ public abstract class Unit
 				}
 				if (robot != null) {
 					RobotInfo ri = rc.senseRobotInfo(robot);
-					if ((ri.eventualEnergon / ri.maxEnergon) < policy.healIfWeakerThan && rc.getEnergonLevel() > policy.minUnitEnergonLevel_Feed) {
+					if (ri.team == myTeam && ri.type == RobotType.SOLDIER &&
+							(ri.eventualEnergon / ri.maxEnergon) < policy.healIfWeakerThan &&
+							rc.getEnergonLevel() > policy.minUnitEnergonLevel_Feed) {
 						double howMuch = Math.min(ri.maxEnergon - ri.eventualEnergon, GameConstants.ENERGON_RESERVE_SIZE);
 						feed(loc, RobotLevel.ON_GROUND, howMuch);
 					//debug_print("feed %f", howMuch);
 					}
 				}
 			}
-		} catch(Exception e) {
+		} catch (Exception e) {
 			debug_print("ZLE: heal failed");
 		}
+	}
+
+	protected void onHungry() throws GameActionException
+	{
+		/**
+		try {
+		throw new ArithmeticException();
+
+		} catch (Exception e) {
+		e.printStackTrace();
+		}
+		 */
+		rc.setIndicatorString(0, "onHungry");
+		rc.setIndicatorString(2, "onHungry");
+		for (;;) {
+//			debug_print("onHungry loop");
+			refreshLocation();
+
+			yieldIf(ByteCodeConstants.Medium);
+			MapLocation loc = nearestArchon();
+
+			if (loc != null) {
+				if (inTransferRange(loc)) {
+//					debug_print("in transfer range hungry");
+					if (--getState().hungryMessageDelay <= 0) {
+						rc.broadcast(new HungerMessage(rc).finalSerialize());
+						getState().hungryMessageDelay = 10;
+						rc.yield();
+					}
+					getState().hungry_FindArchon = false;
+					return;
+				} else if (!getState().hungry_FindArchon) {
+					rc.setIndicatorString(0, "onHungry - fp");
+					getState().hungry_FindArchon = true;
+
+					stupidWalkGoTo(null, CollisionPolicy.GoRound);
+					getState().hungry_FindArchon = false; //?????!
+				} else {
+					return;
+				}
+			} else {
+				debug_print("no archon");
+				return;
+			}
+		}
+
 	}
 }

@@ -3,7 +3,6 @@ package batman.unit;
 import batman.constants.StrategyConstants;
 import batman.management.order.AttackMoveOrder;
 import batman.management.order.Order;
-import batman.management.order.PathFindMoveOrder;
 import batman.management.order.SimpleMoveOrder;
 import batman.messaging.Recipient;
 import battlecode.common.Direction;
@@ -13,11 +12,11 @@ import battlecode.common.RobotController;
 import battlecode.common.RobotType;
 import batman.messaging.message.HungerMessage;
 import batman.messaging.message.IMessage;
-import batman.messaging.message.MapTransferResponseMessage;
 import batman.messaging.message.OrderMessage;
 import batman.messaging.message.RequestBlockMessage;
 import batman.pathfinding.WalkResult;
 import batman.unit.state.ArchonState;
+import batman.unit.state.UnitState;
 import batman.utils.MapUtils;
 import battlecode.common.Clock;
 import battlecode.common.FluxDeposit;
@@ -143,38 +142,46 @@ public class Archon extends Unit
 
 		/*
 		//for (int loop = 0;; loop++) {
-			handleInts();
-			rc.yield();
-			if (false) {
-				int ts = Clock.getRoundNum();
-				MapTransferResponseMessage msg = new MapTransferResponseMessage(map.getTileSet());
-//				debug_print("create maptransfer msg took: %d", Clock.getRoundNum()-ts);
-				rc.broadcast(msg.finalSerialize());
-//				debug_print("and serialize map took: %d", Clock.getRoundNum()-ts);
-				rc.yield();
+		handleInts();
+		rc.yield();
+		if (false) {
+		int ts = Clock.getRoundNum();
+		MapTransferResponseMessage msg = new MapTransferResponseMessage(map.getTileSet());
+		//				debug_print("create maptransfer msg took: %d", Clock.getRoundNum()-ts);
+		rc.broadcast(msg.finalSerialize());
+		//				debug_print("and serialize map took: %d", Clock.getRoundNum()-ts);
+		rc.yield();
 
 
-//				AStar alg = new AStar();
-//				MapLocation to = MapUtils.randLocRange(curLoc, 30, 30, rand);
-//				Path path = alg.findPath(refreshLocation(), to, map, rc.getRobotType());
+		//				AStar alg = new AStar();
+		//				MapLocation to = MapUtils.randLocRange(curLoc, 30, 30, rand);
+		//				Path path = alg.findPath(refreshLocation(), to, map, rc.getRobotType());
 
-			//				debug_print("%d %d ----> %d %d", curLoc.getX(), curLoc.getY(), to.getX(), to.getY());
-			//map.debug_print();
-			//map.debug_print(path);
-			}
+		//				debug_print("%d %d ----> %d %d", curLoc.getX(), curLoc.getY(), to.getX(), to.getY());
+		//map.debug_print();
+		//map.debug_print(path);
+		}
 
-			if (Clock.getRoundNum() >= 100) {
-				break;
-			}
+		if (Clock.getRoundNum() >= 100) {
+		break;
+		}
 		}
 		 *
 		 */
 
+		if (!state.followLeader) {
+			findFlux();
+		}
 
 		MapLocation targetLoc = refreshLocation();
 		for (int loop = 0;; loop++) {
 			if (!state.closeCombat) {
-				targetLoc = findAndDestroy(targetLoc);
+				if (state.followLeader) {
+					followTheLeader();
+				} else {
+					rc.setIndicatorString(1, String.format("fad: %s -> %s", refreshLocation(), targetLoc));
+					targetLoc = findAndDestroy(targetLoc);
+				}
 			}
 
 			handleInts();
@@ -186,7 +193,7 @@ public class Archon extends Unit
 	{
 		if (!state.followLeader) { //lead
 			if (targetLoc.equals(refreshLocation())) {
-				Direction fluxDir = rc.senseDirectionToOwnedFluxDeposit();
+				Direction fluxDir = rc.senseDirectionToUnownedFluxDeposit();
 				if (fluxDir != Direction.NONE && fluxDir != Direction.OMNI) {
 					targetLoc = refreshLocation().add(fluxDir);
 				} else {
@@ -308,28 +315,17 @@ public class Archon extends Unit
 
 		Direction dir = rc.senseDirectionToUnownedFluxDeposit();
 
-		while (dir != Direction.OMNI && dir != Direction.NONE) {
-			rc.setDirection(dir);
-			rc.yield();
-			if (rc.canMove(rc.getDirection())) {
-				rc.moveForward();
-			} else {
-//				ping();
-				//rc.setDirection(rc.getDirection().rotateLeft());
-				goStupid(20);
+		for (int i = 1; i <= 3 && dir != Direction.OMNI && dir != Direction.NONE;) {
+			if (stupidWalkStep(refreshLocation().add(dir)) != WalkResult.Walking) {
+				i++;
 			}
-			rc.yield();
-			yieldMv();
 			dir = rc.senseDirectionToUnownedFluxDeposit();
 		}
 
 		if (dir == Direction.NONE) {
-			for (;;) {
-				ping();
-				return;
-			}
+			goStupid(7);
+			return;
 		} else { //omni
-
 
 			//buildWorker();
 
@@ -370,22 +366,22 @@ public class Archon extends Unit
 //			buildWorker();
 
 
-			for (int i = 1;; i++) {
-				rc.setIndicatorString(1, "extract");
-				handleInts();
-				rc.yield();
-				if (rand.nextInt(50) == 0) {
-					requestBlock(rand.nextInt(5) + 3);
-				}
-				if (i % 100 == 20) {
-					buildWorker();
-					rc.broadcast(new OrderMessage(new PathFindMoveOrder(MapUtils.randLocRange(refreshLocation(), 5, 5, rand))).finalSerialize());
-				}
-				if (i % 70 == 0 && i > 600) {
-					buildSoldier();
-					buildSoldier();
-				}
-			}
+			captureFluxDeposidUnderArchon();
+		/*
+
+		for (int i = 1;; i++) {
+		rc.setIndicatorString(1, "extract");
+		handleInts();
+		rc.yield();
+		if (rand.nextInt(50) == 0) {
+		requestBlock(rand.nextInt(5) + 3);
+		}
+		if (i % 100 == 20) {
+		buildWorker();
+		rc.broadcast(new OrderMessage(new PathFindMoveOrder(MapUtils.randLocRange(refreshLocation(), 5, 5, rand))).finalSerialize());
+		}
+		}
+		 */
 		}
 	}
 
@@ -477,17 +473,7 @@ public class Archon extends Unit
 						moveArmy(curLoc.add(curLoc.directionTo(fdi.location)));
 						handleInts();
 					}
-					for (int i = 1; i <= GameConstants.ROUNDS_TO_CAPTURE + 20; i++) {
-						FluxDeposit cfd = rc.senseFluxDepositAtLocation(refreshLocation());
-						if (cfd == null) {
-							break;
-						} else {
-							if (rc.senseFluxDepositInfo(cfd).roundsUntilCapture == 0) {
-								break;
-							}
-						}
-						rc.yield();
-					}
+					captureFluxDeposidUnderArchon();
 					break;
 				}
 			}
@@ -506,7 +492,35 @@ public class Archon extends Unit
 			healSomeGroundUnits();
 		}
 
+		/*
+		if (state.captureingFlux) {
+
+		if (rand.nextInt(40) == 0) {
+		requestBlock(rand.nextInt(5) + 3);
+		}
+		if (rand.nextInt(20) == 0) {
+		buildWorker();
+		}
+		} */
+
 		handleIntsDepth--;
+	}
+
+	protected void captureFluxDeposidUnderArchon() throws GameActionException
+	{
+		for (int i = 1; i <= GameConstants.ROUNDS_TO_CAPTURE + 20; i++) {
+			FluxDeposit cfd = rc.senseFluxDepositAtLocation(refreshLocation());
+			if (cfd == null) {
+				break;
+			} else {
+				if (rc.senseFluxDepositInfo(cfd).roundsUntilCapture == 0) {
+					break;
+				}
+			}
+			sleep(1);
+		}
+
+		state.captureingFlux = false;
 	}
 
 	protected void checkAndHandleCombat() throws GameActionException
@@ -564,5 +578,11 @@ public class Archon extends Unit
 	protected boolean checkRecipient(Recipient recipient) throws GameActionException
 	{
 		return (recipient.toWhom.flag & Recipient.RecipientType.Archons.flag) == Recipient.RecipientType.Archons.flag; //TODO medics
+	}
+
+	@Override
+	protected UnitState getState()
+	{
+		return state;
 	}
 }
