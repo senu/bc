@@ -25,7 +25,11 @@ public class RobotPolicy implements ISerializable
 	public MapRefreshPolicy mapRefreshPolicy;
 	public AttackTargetingPolicy attackTargetingPolicy;
 	public CollisionPolicy collisionPolicy;
+
 	public boolean stupidWalkTurnLeft;
+	public double minUnitEnergonLevel_Feed; //jak ma mniej niz ta wartosc, to nie leczy
+	public double healIfWeakerThan; //[0;1]
+
 
 	public RobotPolicy(Random rand)
 	{
@@ -45,6 +49,8 @@ public class RobotPolicy implements ISerializable
 		attackTargetingPolicy = AttackTargetingPolicy.AttackCloser;
 		collisionPolicy = CollisionPolicy.GoRound;
 		stupidWalkTurnLeft = turnLeft;
+		minUnitEnergonLevel_Feed = 7;
+		healIfWeakerThan = 0.4;
 	}
 
 	public void deserialize(SerializationIterator it)

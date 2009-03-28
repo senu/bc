@@ -31,6 +31,7 @@ import battlecode.common.Message;
 import battlecode.common.Robot;
 import battlecode.common.RobotController;
 import battlecode.common.RobotInfo;
+import battlecode.common.RobotLevel;
 import battlecode.common.RobotType;
 import battlecode.common.Team;
 import battlecode.common.TerrainTile;
@@ -180,9 +181,10 @@ public abstract class Unit
 		}
 	}
 
+	/** Czekaj, az ruch i atak sie nie skonczy. */
 	protected final void yieldAtt()
 	{
-		while (rc.isAttackActive()) {
+		while (rc.isAttackActive() || rc.isMovementActive()) {
 			rc.yield();
 		}
 	}
@@ -210,9 +212,16 @@ public abstract class Unit
 		yieldIf(ByteCodeConstants.Half);
 	}
 
+	/** Jezeli targetLoc == null, to szuka archona */
 	public ExecutionResult stupidWalkGoTo(MapLocation targetLoc, CollisionPolicy colPolicy) throws GameActionException
 	{
-		debug_print("stupidWalkGo %s", targetLoc.toString());
+		boolean searchArchon = (targetLoc == null);
+		//debug_print("stupidWalkGo %s", searchArchon ? "NULL" : targetLoc.toString());
+
+		if (searchArchon) {
+			targetLoc = nearestArchon();
+		}
+
 		yieldSmallBC();
 		if (refreshLocation().equals(targetLoc)) {
 			return ExecutionResult.OK;
@@ -223,13 +232,20 @@ public abstract class Unit
 		curDirection = nextDirection;
 
 		for (int i = 1; i < StrategyConstants.STUPID_GO_STEPS; i += 3) {
+			if (searchArchon) {
+				targetLoc = nearestArchon();
+			}
 			if (refreshLocation().equals(targetLoc)) {
 				return ExecutionResult.OK;
 			}
 			nextDirection = curLoc.directionTo(targetLoc);
 
 			if (nextDirection == curDirection.opposite()) { //nie chcemy sie cofac
-				nextDirection = curDirection;
+				if (i % 4 == 0) {
+					nextDirection = stupidTurnLeftOrRight(curDirection);
+				} else {
+					nextDirection = curDirection;
+				}
 			}
 
 			if (!rc.canMove(nextDirection)) { //przeszkoda - omijamy ja dalej
@@ -506,8 +522,8 @@ public abstract class Unit
 	{
 		rc.setIndicatorString(0, "sleep");
 		for (int i = 1; i <= howLong; i++) {
-			handleInts();
 			rc.yield();
+			handleInts();
 		}
 
 		return ExecutionResult.OK;
@@ -560,10 +576,27 @@ public abstract class Unit
 		return ret;
 	}
 
-	protected List<RobotInfo> getEnemyGroundUnits() throws GameActionException
+	protected ArrayList<RobotInfo> getEnemyGroundUnits() throws GameActionException
 	{
 		ArrayList<RobotInfo> ret = new ArrayList<RobotInfo>(10);
 		for (Robot robot : rc.senseNearbyGroundRobots()) {
+			RobotInfo ri = rc.senseRobotInfo(robot);
+			if (ri.team != myTeam) {
+				ret.add(ri);
+			}
+
+		}
+
+		return ret;
+	}
+
+	protected ArrayList<RobotInfo> getEnemyAirUnits(ArrayList<RobotInfo> appendTo) throws GameActionException
+	{
+		ArrayList<RobotInfo> ret = appendTo;
+		if (appendTo == null) {
+			ret = new ArrayList<RobotInfo>(10);
+		}
+		for (Robot robot : rc.senseNearbyAirRobots()) {
 			RobotInfo ri = rc.senseRobotInfo(robot);
 			if (ri.team != myTeam) {
 				ret.add(ri);
@@ -586,6 +619,39 @@ public abstract class Unit
 				}
 			} else {
 				map.setTile(loc, newTile);
+			}
+		}
+	}
+
+	/** Nie sprawdza czy robot jest w zasiegu! */
+	protected void feed(MapLocation where, RobotLevel rl, double howMuch) throws GameActionException
+	{
+		double maxTransfer = Math.max(0, rc.getEnergonLevel() - policy.minUnitEnergonLevel_Feed);
+		double realHowMuch = Math.min(maxTransfer, howMuch);
+		if (realHowMuch > 0) {
+			rc.transferEnergon(realHowMuch, where, rl);
+		}
+	}
+
+	protected void healSomeGroundUnits() throws GameActionException
+	{
+		yieldSmallBC();
+		refreshLocation();
+		Robot robot;
+		for (Direction dir : MapUtils.movableDirections) { //TOOD under
+			MapLocation loc = curLoc.add(dir);
+			if (rc.canSenseSquare(loc)) {
+				robot = rc.senseGroundRobotAtLocation(loc);
+			} else {
+				robot = null;
+			}
+			if (robot != null) {
+				RobotInfo ri = rc.senseRobotInfo(robot);
+				if ((ri.eventualEnergon / ri.maxEnergon) < policy.healIfWeakerThan && rc.getEnergonLevel() > policy.minUnitEnergonLevel_Feed) {
+					double howMuch = Math.min(ri.maxEnergon - ri.eventualEnergon, GameConstants.ENERGON_RESERVE_SIZE);
+					feed(loc, RobotLevel.ON_GROUND, howMuch);
+				//debug_print("feed %f", howMuch);
+				}
 			}
 		}
 	}

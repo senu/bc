@@ -34,7 +34,7 @@ public class SoldierExecutor implements Executor
 
 	public ExecutionResult executeSimpleMoveOrder(SimpleMoveOrder order) throws GameActionException
 	{
-		DebugUtils.debug_print("simpleMoveOrder %s", order.where.toString());
+	//	DebugUtils.debug_print("simpleMoveOrder %s", order.where.toString());
 		return target.stupidWalkGoTo(order.where, CollisionPolicy.WaitALitte);
 	}
 

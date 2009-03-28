@@ -23,6 +23,7 @@ import battlecode.common.Clock;
 import battlecode.common.GameConstants;
 import battlecode.common.Robot;
 import battlecode.common.RobotInfo;
+import battlecode.common.RobotLevel;
 import battlecode.common.TerrainTile;
 import battlecode.common.TerrainTile.TerrainType;
 import java.util.ArrayList;
@@ -44,6 +45,8 @@ public class Archon extends Unit
 	public Archon(RobotController rc)
 	{
 		super(rc);
+		policy.minUnitEnergonLevel_Feed = StrategyConstants.ARCHON_MIN_ENERGON_LEVEL;
+		policy.healIfWeakerThan = 0.6;
 	}
 
 	public final void beYourself() throws GameActionException
@@ -147,7 +150,7 @@ public class Archon extends Unit
 			//map.debug_print(path);
 			}
 
-			if (Clock.getRoundNum() >= 600) {
+			if (Clock.getRoundNum() >= 100) {
 				break;
 			}
 		}
@@ -157,9 +160,12 @@ public class Archon extends Unit
 		for (int loop = 0;; loop++) {
 			if (!state.followLeader) { //lead
 				if (targetLoc.equals(refreshLocation())) {
-					Direction fluxDir = rc.senseDirectionToUnownedFluxDeposit();
-//					targetLoc = refreshLocation().add(fluxDir).add(fluxDir).add(fluxDir).add(fluxDir);
-					targetLoc = MapUtils.randLocRange(curLoc, 20, 20, rand);
+					Direction fluxDir = rc.senseDirectionToOwnedFluxDeposit();
+					if (fluxDir != Direction.NONE && fluxDir != Direction.OMNI) {
+						targetLoc = refreshLocation().add(fluxDir);
+					} else {
+						targetLoc = MapUtils.randLocRange(curLoc, 25, 25, rand);
+					}
 				} else {
 					if (moveArmy(targetLoc) != WalkResult.Walking) {
 						targetLoc = curLoc;
@@ -198,7 +204,7 @@ public class Archon extends Unit
 		ret = stupidWalkStep(targetLoc);
 		if (!state.followLeader) {
 			rc.broadcast(new OrderMessage(order).finalSerialize());
-			sleep(6);
+			sleep(8);
 		}
 
 		return ret;
@@ -222,7 +228,7 @@ public class Archon extends Unit
 
 		if (count == 0) {
 			mySoldiers.clear();
-	//		debug_print("mySoldiers clear");
+		//		debug_print("mySoldiers clear");
 		}
 		if (count < 4) {
 			buildSoldier();
@@ -379,11 +385,11 @@ public class Archon extends Unit
 	private void buildSoldier() throws GameActionException
 	{
 		if (buildUnit(RobotType.SOLDIER)) {
-			debug_print("built soldier");
+//			debug_print("built soldier");
 			Robot robot = rc.senseGroundRobotAtLocation(frontLoc());
 			if (robot != null) {
 				mySoldiers.add(robot.getID());
-				//debug_print("%s", mySoldiers.toString());
+			//debug_print("%s", mySoldiers.toString());
 			} else {
 				debug_print("something went wrong");
 			}
@@ -402,8 +408,11 @@ public class Archon extends Unit
 
 	protected final void handleInts() throws GameActionException
 	{
+		timeNow = Clock.getRoundNum();
+
 		handleIntsDepth++;
 		if (handleIntsDepth > 3) {
+			handleIntsDepth--;
 			throw new ArithmeticException();
 		}
 		for (IMessage msg : getMessages()) {
@@ -418,9 +427,14 @@ public class Archon extends Unit
 			updateMap();
 		}
 
-		if (state.buildSoldiers && Clock.getRoundNum() % 17 == 0) {
+		if (state.buildSoldiers && timeNow % 17 == 0) {
 			buildSoldiersIfNeeded();
 		}
+
+		if (timeNow % 4 == 1) {
+			healSomeGroundUnits();
+		}
+
 		handleIntsDepth--;
 	}
 
@@ -431,10 +445,15 @@ public class Archon extends Unit
 		if (!enemies.isEmpty()) {
 			if (!state.closeCombat) {
 				state.closeCombat = true;
-				rc.broadcast(new OrderMessage(new AttackMoveOrder(enemies.get(0).location)).finalSerialize());
+				policy.minUnitEnergonLevel_Feed = 50;
+				MapLocation enemyLoc = enemies.get(0).location;
+				rc.broadcast(new OrderMessage(new AttackMoveOrder(enemyLoc)).finalSerialize());
+				rc.yield(); //TODO to trwa 2 tury
+				stupidWalkStep(enemyLoc);
 			}
 		} else {
 			state.closeCombat = false;
+			policy.minUnitEnergonLevel_Feed = StrategyConstants.ARCHON_MIN_ENERGON_LEVEL;
 		}
 
 	}
@@ -451,10 +470,7 @@ public class Archon extends Unit
 			if (robot != null) { //TODO
 				RobotInfo ri = rc.senseRobotInfo(robot);
 				double howMuch = Math.min(ri.maxEnergon - ri.eventualEnergon, GameConstants.ENERGON_RESERVE_SIZE);
-				if (hasEnergon(howMuch + StrategyConstants.ARCHON_MIN_ENERGON_LEVEL)) {
-					rc.transferEnergon(howMuch, loc, msg.rl);
-					rc.yield();
-				}
+				feed(loc, msg.rl, howMuch);
 			}
 		}
 
