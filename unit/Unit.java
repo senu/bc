@@ -177,7 +177,7 @@ public abstract class Unit
 	protected final void yieldMv()
 	{
 		/*while (rc.isMovementActive()) {
-			rc.yield();
+		rc.yield();
 		}*/
 		while (rc.isAttackActive() || rc.isMovementActive()) {
 			rc.yield();
@@ -638,6 +638,7 @@ public abstract class Unit
 	{
 		double maxTransfer = Math.max(0, rc.getEnergonLevel() - policy.minUnitEnergonLevel_Feed);
 		double realHowMuch = Math.min(maxTransfer, howMuch);
+		yieldSmallBC();
 		if (realHowMuch > 0) {
 			rc.transferEnergon(realHowMuch, where, rl);
 		}
@@ -645,24 +646,28 @@ public abstract class Unit
 
 	protected void healSomeGroundUnits() throws GameActionException
 	{
-		yieldSmallBC();
-		refreshLocation();
-		Robot robot;
-		for (Direction dir : MapUtils.movableDirections) { //TOOD under
-			MapLocation loc = curLoc.add(dir);
-			if (rc.canSenseSquare(loc)) {
-				robot = rc.senseGroundRobotAtLocation(loc);
-			} else {
-				robot = null;
-			}
-			if (robot != null) {
-				RobotInfo ri = rc.senseRobotInfo(robot);
-				if ((ri.eventualEnergon / ri.maxEnergon) < policy.healIfWeakerThan && rc.getEnergonLevel() > policy.minUnitEnergonLevel_Feed) {
-					double howMuch = Math.min(ri.maxEnergon - ri.eventualEnergon, GameConstants.ENERGON_RESERVE_SIZE);
-					feed(loc, RobotLevel.ON_GROUND, howMuch);
-				//debug_print("feed %f", howMuch);
+		try {
+			yieldSmallBC();
+			refreshLocation();
+			Robot robot;
+			for (Direction dir : MapUtils.movableDirections) { //TOOD under
+				MapLocation loc = curLoc.add(dir);
+				if (rc.canSenseSquare(loc)) {
+					robot = rc.senseGroundRobotAtLocation(loc);
+				} else {
+					robot = null;
+				}
+				if (robot != null) {
+					RobotInfo ri = rc.senseRobotInfo(robot);
+					if ((ri.eventualEnergon / ri.maxEnergon) < policy.healIfWeakerThan && rc.getEnergonLevel() > policy.minUnitEnergonLevel_Feed) {
+						double howMuch = Math.min(ri.maxEnergon - ri.eventualEnergon, GameConstants.ENERGON_RESERVE_SIZE);
+						feed(loc, RobotLevel.ON_GROUND, howMuch);
+					//debug_print("feed %f", howMuch);
+					}
 				}
 			}
+		} catch(Exception e) {
+			debug_print("ZLE: heal failed");
 		}
 	}
 }
