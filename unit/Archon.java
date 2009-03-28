@@ -237,6 +237,7 @@ public class Archon extends Unit
 			}
 
 			if (found == false) { //?
+				rc.setIndicatorString(1, "lost leader");
 				//COPY PASTE
 				if (targetLoc.equals(refreshLocation())) {
 					Direction fluxDir = rc.senseDirectionToUnownedFluxDeposit();
@@ -456,8 +457,8 @@ public class Archon extends Unit
 	protected boolean buildUnit(RobotType type)
 	{
 		try {
-			if (!hasEnergon(type.spawnCost() + 2.0)) {
-				debug_print("cannot spawn unit: not enough energon");
+			if (!hasEnergon(type.spawnCost() + 4.0)) {
+//				debug_print("cannot spawn unit: not enough energon");
 				return false;
 			}
 //			while (!hasEnergon(type.spawnCost())) {
@@ -479,7 +480,7 @@ public class Archon extends Unit
 				rc.yield();
 				return true;
 			} else {
-				debug_print("cannot spawn unit");
+//				debug_print("cannot spawn unit");
 			}
 
 		} catch (Exception e) {
