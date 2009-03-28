@@ -9,7 +9,9 @@ import batman.management.order.SendMessageOrder;
 import batman.management.order.SimpleMoveOrder;
 import batman.management.result.ExecutionResult;
 import batman.management.order.ChangeRobotPolicyOrder;
+import batman.strategy.policy.CollisionPolicy;
 import batman.unit.Soldier;
+import batman.utils.DebugUtils;
 import battlecode.common.GameActionException;
 
 /**
@@ -32,7 +34,8 @@ public class SoldierExecutor implements Executor
 
 	public ExecutionResult executeSimpleMoveOrder(SimpleMoveOrder order) throws GameActionException
 	{
-		return target.stupidWalkGoTo(order.where);
+		DebugUtils.debug_print("simpleMoveOrder %s", order.where.toString());
+		return target.stupidWalkGoTo(order.where, CollisionPolicy.WaitALitte);
 	}
 
 	public ExecutionResult executePathFindMoveOrder(PathFindMoveOrder order) throws GameActionException
@@ -66,6 +69,4 @@ public class SoldierExecutor implements Executor
 	{
 		return target.attackMove(order.where);
 	}
-
-
 }

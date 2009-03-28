@@ -17,7 +17,9 @@ import batman.utils.MapUtils;
 import batman.pathfinding.GameMap;
 import batman.pathfinding.MapTile;
 import batman.pathfinding.Path;
+import batman.pathfinding.WalkResult;
 import batman.strategy.RobotPolicy;
+import batman.strategy.policy.CollisionPolicy;
 import batman.strategy.policy.MapRefreshPolicy;
 import batman.utils.SimpleRobotInfo;
 import battlecode.common.Clock;
@@ -208,8 +210,9 @@ public abstract class Unit
 		yieldIf(ByteCodeConstants.Half);
 	}
 
-	public ExecutionResult stupidWalkGoTo(MapLocation targetLoc) throws GameActionException
+	public ExecutionResult stupidWalkGoTo(MapLocation targetLoc, CollisionPolicy colPolicy) throws GameActionException
 	{
+		debug_print("stupidWalkGo %s", targetLoc.toString());
 		yieldSmallBC();
 		if (refreshLocation().equals(targetLoc)) {
 			return ExecutionResult.OK;
@@ -219,7 +222,7 @@ public abstract class Unit
 		nextDirection = curLoc.directionTo(targetLoc);
 		curDirection = nextDirection;
 
-		for (int i = 1; i < StrategyConstants.STUPID_GO_STEPS; i++) {
+		for (int i = 1; i < StrategyConstants.STUPID_GO_STEPS; i += 3) {
 			if (refreshLocation().equals(targetLoc)) {
 				return ExecutionResult.OK;
 			}
@@ -230,14 +233,39 @@ public abstract class Unit
 			}
 
 			if (!rc.canMove(nextDirection)) { //przeszkoda - omijamy ja dalej
-				nextDirection = curDirection;
+				if (colPolicy == CollisionPolicy.GoRound) { //omijamy
+					nextDirection = curDirection;
+				} else { //czekamy //TODO a little
+					MapLocation nextLoc = curLoc.add(nextDirection);
+					if (rc.canSenseSquare(nextLoc)) {
+						Robot obstacle = rc.senseGroundRobotAtLocation(nextLoc);
+						if (obstacle != null && rc.senseRobotInfo(obstacle).team == myTeam) {//TODO air, TODO height
+							sleep(1);
+							i -= 2;
+							continue;
+						}
+					}
+					//jednak omijamy
+					nextDirection = curDirection;
+				}
 			}
 
 			for (int j = 1; !rc.canMove(nextDirection) && j <= 4; j++) { // kolejna przeszkoda - omijamy idac lewej
-				if (policy.stupidWalkTurnLeft) {
-					nextDirection = nextDirection.rotateLeft();
-				} else {
-					nextDirection = nextDirection.rotateRight();
+				//COPY PASTE
+				if (colPolicy == CollisionPolicy.GoRound) { //omijamy
+					nextDirection = stupidTurnLeftOrRight(nextDirection);
+				} else { //czekamy //TODO a little
+					MapLocation nextLoc = curLoc.add(nextDirection);
+					if (rc.canSenseSquare(nextLoc)) {
+						Robot obstacle = rc.senseGroundRobotAtLocation(nextLoc);
+						if (obstacle != null && rc.senseRobotInfo(obstacle).team == myTeam) {//TODO air, TODO height
+							sleep(1);
+							i -= 2;
+							continue;
+						}
+					}
+					//jednak omijamy
+					nextDirection = stupidTurnLeftOrRight(nextDirection);
 				}
 			}
 
@@ -251,11 +279,20 @@ public abstract class Unit
 
 	}
 
+	protected Direction stupidTurnLeftOrRight(Direction nextDirection)
+	{
+		if (policy.stupidWalkTurnLeft) {
+			return nextDirection.rotateLeft();
+		} else {
+			return nextDirection.rotateRight();
+		}
+	}
+
 	//TODO remove it
-	protected final boolean stupidWalkStep(MapLocation nextLoc) throws GameActionException
+	protected final WalkResult stupidWalkStep(MapLocation nextLoc) throws GameActionException
 	{
 		if (refreshLocation().equals(nextLoc)) {
-			return true;
+			return WalkResult.Finished;
 		}
 		yieldMv();
 
@@ -271,7 +308,7 @@ public abstract class Unit
 			if (rc.canMove(rc.getDirection())) {
 				rc.moveForward();
 			} else {
-				ping();
+				return WalkResult.CannotReachLoc;
 			}
 
 			rc.yield();
@@ -280,8 +317,9 @@ public abstract class Unit
 			if (rc.canSenseSquare(nextLoc) && rc.senseGroundRobotAtLocation(nextLoc) == null) {
 				map.setTile(nextLoc, new MapTile(MapTile.LocState.Bad)); //TODO to blokuje pole na zawsze, gdy stoi tam robot
 			}
+			return WalkResult.CannotReachLoc;
 		}
-		return false;
+		return WalkResult.Walking;
 	}
 
 	protected void updateMap() throws GameActionException

@@ -29,12 +29,22 @@ public class RobotPolicy implements ISerializable
 
 	public RobotPolicy(Random rand)
 	{
+		init(rand.nextBoolean());
+	}
+
+	public RobotPolicy()
+	{
+		init(true);
+	}
+
+	protected void init(boolean turnLeft)
+	{
 		hungerPolicy = HungerPolicy.HungryAt35;
 		enemySpottedPolicy = EnemySpottedPolicy.AttackIfWeaker;
 		mapRefreshPolicy = MapRefreshPolicy.OldScanModerately;
 		attackTargetingPolicy = AttackTargetingPolicy.AttackCloser;
 		collisionPolicy = CollisionPolicy.GoRound;
-		stupidWalkTurnLeft = rand.nextBoolean();
+		stupidWalkTurnLeft = turnLeft;
 	}
 
 	public void deserialize(SerializationIterator it)

@@ -16,6 +16,7 @@ import batman.messaging.message.IMessage;
 import batman.messaging.message.MapTransferResponseMessage;
 import batman.messaging.message.OrderMessage;
 import batman.messaging.message.RequestBlockMessage;
+import batman.pathfinding.WalkResult;
 import batman.unit.state.ArchonState;
 import batman.utils.MapUtils;
 import battlecode.common.Clock;
@@ -63,7 +64,7 @@ public class Archon extends Unit
 		rc.setIndicatorString(0, "go Start");
 
 		for (int i = 0; i < 180; i++) {
-			if (stupidWalkStep(startLoc)) {
+			if (stupidWalkStep(startLoc) != WalkResult.Walking) {
 				break;
 			}
 			handleInts();
@@ -155,11 +156,14 @@ public class Archon extends Unit
 
 		for (int loop = 0;; loop++) {
 			if (!state.followLeader) { //lead
-
 				if (targetLoc.equals(refreshLocation())) {
-					targetLoc = MapUtils.randLocRange(refreshLocation(), 10, 10, rand);
+					Direction fluxDir = rc.senseDirectionToUnownedFluxDeposit();
+//					targetLoc = refreshLocation().add(fluxDir).add(fluxDir).add(fluxDir).add(fluxDir);
+					targetLoc = MapUtils.randLocRange(curLoc, 20, 20, rand);
 				} else {
-					moveArmy(targetLoc);
+					if (moveArmy(targetLoc) != WalkResult.Walking) {
+						targetLoc = curLoc;
+					}
 				}
 
 			} else { //follow
@@ -181,20 +185,23 @@ public class Archon extends Unit
 
 	}
 
-	protected void moveArmy(MapLocation targetLoc) throws GameActionException
+	protected WalkResult moveArmy(MapLocation targetLoc) throws GameActionException
 	{
 		MapLocation groundLoc = refreshLocation().add(curLoc.directionTo(targetLoc));
+		WalkResult ret;
 
 		for (int i = 1; rc.senseTerrainTile(groundLoc).getType() != TerrainType.LAND && i <= 3; i++) {
 			groundLoc = groundLoc.add(curLoc.directionTo(targetLoc));
 		}
 
 		Order order = new SimpleMoveOrder(groundLoc);
-		stupidWalkStep(targetLoc);
+		ret = stupidWalkStep(targetLoc);
 		if (!state.followLeader) {
 			rc.broadcast(new OrderMessage(order).finalSerialize());
 			sleep(6);
 		}
+
+		return ret;
 	}
 
 	protected void buildSoldiersIfNeeded() throws GameActionException
@@ -215,7 +222,7 @@ public class Archon extends Unit
 
 		if (count == 0) {
 			mySoldiers.clear();
-			debug_print("mySoldiers clear");
+	//		debug_print("mySoldiers clear");
 		}
 		if (count < 4) {
 			buildSoldier();
@@ -336,9 +343,13 @@ public class Archon extends Unit
 	protected boolean buildUnit(RobotType type)
 	{
 		try {
-			while (!hasEnergon(type.spawnCost())) {
-				handleInts();
+			if (!hasEnergon(type.spawnCost())) {
+				debug_print("cannot spawn unit: not enough energon");
+				return false;
 			}
+//			while (!hasEnergon(type.spawnCost())) {
+//				handleInts();
+//			}
 
 			int i = 0;
 			while (rc.senseGroundRobotAtLocation(frontLoc()) != null || rc.senseTerrainTile(frontLoc()).getType() != TerrainTile.TerrainType.LAND) {
@@ -372,7 +383,7 @@ public class Archon extends Unit
 			Robot robot = rc.senseGroundRobotAtLocation(frontLoc());
 			if (robot != null) {
 				mySoldiers.add(robot.getID());
-				debug_print("%s", mySoldiers.toString());
+				//debug_print("%s", mySoldiers.toString());
 			} else {
 				debug_print("something went wrong");
 			}
@@ -391,6 +402,10 @@ public class Archon extends Unit
 
 	protected final void handleInts() throws GameActionException
 	{
+		handleIntsDepth++;
+		if (handleIntsDepth > 3) {
+			throw new ArithmeticException();
+		}
 		for (IMessage msg : getMessages()) {
 			if (msg instanceof HungerMessage) { //TODO
 				feed((HungerMessage) msg);
@@ -406,6 +421,7 @@ public class Archon extends Unit
 		if (state.buildSoldiers && Clock.getRoundNum() % 17 == 0) {
 			buildSoldiersIfNeeded();
 		}
+		handleIntsDepth--;
 	}
 
 	protected void checkAndHandleCombat() throws GameActionException
