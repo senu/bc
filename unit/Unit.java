@@ -572,13 +572,6 @@ public abstract class Unit
 				IMessage newMsg = null;
 				int type = m.ints[1];
 				newMsg = ((IMessage) messageTypes.get(type).newInstance());
-				if (newMsg == null) {
-					debug_print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAa");
-				}
-
-				if (newMsg.getRecipient() == null) {
-					debug_print("AXXXXAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAa");
-				}
 
 				if (!checkRecipient(newMsg.getRecipient())) {
 					continue;

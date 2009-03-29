@@ -69,9 +69,9 @@ public class Soldier extends Unit
 				}
 				state.orderQueue.add(msg.order);
 				//TODO_
-				if (state.orderQueue.size() > 4) {
-					debug_print("orderQueue: %s %d", state.orderQueue, state.orderQueue.size());
-				}
+		//		if (state.orderQueue.size() > 4) {
+		//			debug_print("orderQueue: %s %d", state.orderQueue, state.orderQueue.size());
+		//		}
 			} else if (inMsg instanceof MapTransferResponseMessage) {
 				handleMapTransfer((MapTransferResponseMessage) inMsg);
 				debug_print("got map transfer");

@@ -4,6 +4,7 @@ import batman.constants.StrategyConstants;
 import batman.management.order.AttackMoveOrder;
 import batman.management.order.Order;
 import batman.management.order.SimpleMoveOrder;
+import batman.management.result.ExecutionResult;
 import batman.messaging.Recipient;
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
@@ -15,6 +16,7 @@ import batman.messaging.message.IMessage;
 import batman.messaging.message.OrderMessage;
 import batman.messaging.message.RequestBlockMessage;
 import batman.pathfinding.WalkResult;
+import batman.strategy.policy.CollisionPolicy;
 import batman.unit.state.ArchonState;
 import batman.unit.state.UnitState;
 import batman.utils.MapUtils;
@@ -214,7 +216,7 @@ public class Archon extends Unit
 					state.enemyIsACoward = true;
 					state.buildSoldiers = false;
 					state.buildWorkers = true;
-					findFlux();
+					findFlux2();
 				}
 
 			} else {
@@ -224,6 +226,45 @@ public class Archon extends Unit
 			}
 		}
 
+	}
+
+	protected void findFlux2() throws GameActionException
+	{
+		for (int j = 1;; j++) {
+			rc.setIndicatorString(0, String.format("FF2 %d", j));
+
+			Direction dir;
+			dir = rc.senseDirectionToOwnedFluxDeposit();
+
+			for (int i = 1; i <= 10 && dir != Direction.OMNI && dir != Direction.NONE;) {
+				rc.setIndicatorString(1, String.format("FF2 loop %d %d", j, i));
+				if (stupidWalkStep(refreshLocation().add(dir)) != WalkResult.Walking) {
+					i++;
+				}
+				dir = rc.senseDirectionToOwnedFluxDeposit();
+				if (rand.nextInt(50)==0) {
+					goStupid(30);
+					break;
+				}
+			}
+
+			if (dir == Direction.OMNI) {
+				rc.setIndicatorString(0, String.format("FF2 2 %d", j));
+				for (int i = 1;; i++) { //cp
+					rc.setIndicatorString(1, "extract2");
+					handleInts();
+					rc.yield();
+					if (rand.nextInt(50) == 0) {
+						requestBlock(rand.nextInt(5) + 3);
+					}
+					if (i % 100 == 60) {
+						buildWorker();
+					}
+				}
+			} else {
+				goStupid(40);
+			}
+		}
 	}
 
 	protected MapLocation seekAndDestroy(MapLocation targetLoc) throws GameActionException
@@ -384,8 +425,8 @@ public class Archon extends Unit
 
 	private final void goStupid(int howLong) throws GameActionException
 	{
-		rc.setIndicatorString(1, "go_stupid");
 		for (int i = 1; i <= howLong; i++) {
+		rc.setIndicatorString(1, String.format("go_stupid %d", i));
 
 			yieldMv();
 
@@ -571,7 +612,7 @@ public class Archon extends Unit
 	protected final void handleInts() throws GameActionException
 	{
 		try {
-			rc.setIndicatorString(1, Boolean.toString(state.enemyIsACoward));
+//			rc.setIndicatorString(1, Boolean.toString(state.enemyIsACoward));
 			timeNow = Clock.getRoundNum();
 
 			handleIntsDepth++;
