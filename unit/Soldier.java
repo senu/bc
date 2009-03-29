@@ -83,8 +83,8 @@ public class Soldier extends Unit
 	protected final void handleInts() throws GameActionException
 	{
 		handleIntsDepth++;
-		rc.setIndicatorString(0, "handleInts");
-		rc.setIndicatorString(1, policy.hungerPolicy.toString());
+//		rc.setIndicatorString(0, "handleInts");
+//		rc.setIndicatorString(1, policy.hungerPolicy.toString());
 
 		if (!state.hungry_FindArchon && isHungry()) {
 //			debug_print("isHungry");

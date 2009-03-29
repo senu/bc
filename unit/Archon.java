@@ -93,8 +93,8 @@ public class Archon extends Unit
 			}
 		}
 
-		rc.setIndicatorString(0, "at Start");
-		rc.setIndicatorString(1, "at Start");
+//		rc.setIndicatorString(0, "at Start");
+//		rc.setIndicatorString(1, "at Start");
 
 		//	goStupid(rand.nextInt(60)); //
 
@@ -121,12 +121,12 @@ public class Archon extends Unit
 				if (i % 2 == 0) {
 					pairIdx = i + 1;
 					leaderIdx = myIdx;
-					rc.setIndicatorString(2, "leader");
+//					rc.setIndicatorString(2, "leader");
 				} else {
 					pairIdx = i - 1;
 					leaderIdx = pairIdx;
 					state.beFollower = true;
-					rc.setIndicatorString(2, "follower");
+//					rc.setIndicatorString(2, "follower");
 				}
 				break;
 			}
@@ -183,7 +183,7 @@ public class Archon extends Unit
 					if (state.enemyIsACoward) {
 						break;
 					}
-					rc.setIndicatorString(1, String.format("fad: %s -> %s", refreshLocation(), targetLoc));
+//					rc.setIndicatorString(1, String.format("fad: %s -> %s", refreshLocation(), targetLoc));
 				}
 			}
 
@@ -274,7 +274,7 @@ public class Archon extends Unit
 			}
 
 			if (found == false) { //?
-				rc.setIndicatorString(1, "lost leader");
+//				rc.setIndicatorString(1, "lost leader");
 				//COPY PASTE
 				if (targetLoc.equals(refreshLocation())) {
 					Direction fluxDir = rc.senseDirectionToUnownedFluxDeposit();
@@ -345,7 +345,7 @@ public class Archon extends Unit
 				}
 				order = new SimpleMoveOrder(refreshLocation());
 				rc.broadcast(new OrderMessage(order).finalSerialize());
-				rc.setIndicatorString(0, String.format("s sleep: %d %s %s --> %s", Clock.getRoundNum(), ret.toString(), refreshLocation(), targetLoc));
+//n				rc.setIndicatorString(0, String.format("s sleep: %d %s %s --> %s", Clock.getRoundNum(), ret.toString(), refreshLocation(), targetLoc));
 				sleep(1);
 			}
 		}

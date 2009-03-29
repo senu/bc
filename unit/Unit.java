@@ -727,8 +727,8 @@ public abstract class Unit
 		e.printStackTrace();
 		}
 		 */
-		rc.setIndicatorString(0, "onHungry");
-		rc.setIndicatorString(2, "onHungry");
+//		rc.setIndicatorString(0, "onHungry");
+//		rc.setIndicatorString(2, "onHungry");
 		for (;;) {
 //			debug_print("onHungry loop");
 			refreshLocation();
@@ -747,7 +747,7 @@ public abstract class Unit
 					getState().hungry_FindArchon = false;
 					return;
 				} else if (!getState().hungry_FindArchon) {
-					rc.setIndicatorString(0, "onHungry - fp");
+//					rc.setIndicatorString(0, "onHungry - fp");
 					getState().hungry_FindArchon = true;
 
 					stupidWalkGoTo(null, CollisionPolicy.GoRound);
