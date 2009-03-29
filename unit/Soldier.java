@@ -83,9 +83,6 @@ public class Soldier extends Unit
 	protected final void handleInts() throws GameActionException
 	{
 		handleIntsDepth++;
-		if (handleIntsDepth >= 3) {
-			throw new ArithmeticException();
-		}
 		rc.setIndicatorString(0, "handleInts");
 		rc.setIndicatorString(1, policy.hungerPolicy.toString());
 

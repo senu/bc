@@ -190,10 +190,38 @@ public class Archon extends Unit
 			handleInts();
 		}
 
+
+		if (state.enemyIsACoward) {
+			rc.setIndicatorString(2, "goRandFlux");
+			goStupid(rand.nextInt(90));
+		}
+
 		//zbieraj
 		for (int loop = 0;; loop++) {
 			findFlux();
+			goStupid(rand.nextInt(90));
 			handleInts();
+		}
+
+	}
+
+	protected void checkGameState() throws GameActionException
+	{
+		Direction fluxDir = rc.senseDirectionToUnownedFluxDeposit();
+		if (Clock.getRoundNum() > 1200) {
+			if (fluxDir == Direction.NONE) {
+				if (state.enemyIsACoward == false) {
+					state.enemyIsACoward = true;
+					state.buildSoldiers = false;
+					state.buildWorkers = true;
+					findFlux();
+				}
+
+			} else {
+				state.enemyIsACoward = false;
+				state.buildSoldiers = true;
+				state.buildWorkers = false;
+			}
 		}
 
 	}
@@ -203,24 +231,12 @@ public class Archon extends Unit
 		if (!state.beFollower) { //lead
 			if (targetLoc.equals(refreshLocation())) {
 				Direction fluxDir = rc.senseDirectionToUnownedFluxDeposit();
-				if (Clock.getRoundNum() > 1200) {
-					if (fluxDir == Direction.NONE) {
-						state.enemyIsACoward = true;
-						state.buildSoldiers = false;
-						state.buildWorkers = true;
-						return curLoc;
-					} else {
-						state.enemyIsACoward = false;
-						state.buildSoldiers = true;
-						state.buildWorkers = false;
-					}
-				}
 				if (fluxDir != Direction.NONE && fluxDir != Direction.OMNI) {
 					targetLoc = refreshLocation().add(fluxDir);
 				} else {
 					targetLoc = MapUtils.randLocRange(curLoc, 25, 25, rand); //TODO_
 				}
-				rc.setIndicatorString(2, String.format("leader: new loc: %s -> %s", refreshLocation(), targetLoc));
+//				rc.setIndicatorString(2, String.format("leader: new loc: %s -> %s", refreshLocation(), targetLoc));
 			} else {
 				WalkResult wr = moveArmy(targetLoc);
 				if (wr != WalkResult.Walking) {
@@ -339,6 +355,9 @@ public class Archon extends Unit
 
 	protected void buildSoldiersIfNeeded() throws GameActionException
 	{
+		if (!state.buildSoldiers) {
+			return;
+		}
 		int count = 0;
 		ArrayList<Integer> newSoldiers = new ArrayList<Integer>(6);
 		for (Robot r : rc.senseNearbyGroundRobots()) {
@@ -379,7 +398,9 @@ public class Archon extends Unit
 			rc.yield();
 
 			//wait for second archon
-			waitForFollower();
+			if (!state.enemyIsACoward) {
+				waitForFollower();
+			}
 
 		}
 	}
@@ -403,13 +424,23 @@ public class Archon extends Unit
 		rc.setIndicatorString(1, "find_flux");
 		//ping();
 
-		Direction dir = rc.senseDirectionToUnownedFluxDeposit();
+		Direction dir;
+		if (state.enemyIsACoward) {
+			dir = rc.senseDirectionToOwnedFluxDeposit();
+		} else {
+			dir = rc.senseDirectionToUnownedFluxDeposit();
+		}
 
 		for (int i = 1; i <= 3 && dir != Direction.OMNI && dir != Direction.NONE;) {
 			if (stupidWalkStep(refreshLocation().add(dir)) != WalkResult.Walking) {
 				i++;
 			}
-			dir = rc.senseDirectionToUnownedFluxDeposit();
+			if (state.enemyIsACoward) {
+				dir = rc.senseDirectionToOwnedFluxDeposit();
+			} else {
+				dir = rc.senseDirectionToUnownedFluxDeposit();
+			}
+
 		}
 
 		if (dir == Direction.NONE) {
@@ -456,22 +487,23 @@ public class Archon extends Unit
 //			buildWorker();
 
 
-			captureFluxDeposidUnderArchon();
-		/*
+			if (!state.enemyIsACoward) {
+				captureFluxDeposidUnderArchon();
+			} else {
 
-		for (int i = 1;; i++) {
-		rc.setIndicatorString(1, "extract");
-		handleInts();
-		rc.yield();
-		if (rand.nextInt(50) == 0) {
-		requestBlock(rand.nextInt(5) + 3);
-		}
-		if (i % 100 == 20) {
-		buildWorker();
-		rc.broadcast(new OrderMessage(new PathFindMoveOrder(MapUtils.randLocRange(refreshLocation(), 5, 5, rand))).finalSerialize());
-		}
-		}
-		 */
+				for (int i = 1;; i++) {
+					rc.setIndicatorString(1, "extract");
+					handleInts();
+					rc.yield();
+					if (rand.nextInt(50) == 0) {
+						requestBlock(rand.nextInt(5) + 3);
+					}
+					if (i % 100 == 60) {
+						buildWorker();
+					}
+				}
+
+			}
 		}
 	}
 
@@ -538,68 +570,72 @@ public class Archon extends Unit
 
 	protected final void handleInts() throws GameActionException
 	{
-//		rc.setIndicatorString(0, Boolean.toString(state.closeCombat));
-		timeNow = Clock.getRoundNum();
+		try {
+			rc.setIndicatorString(1, Boolean.toString(state.enemyIsACoward));
+			timeNow = Clock.getRoundNum();
 
-		handleIntsDepth++;
-		if (handleIntsDepth > 3) {
-			handleIntsDepth--;
-			throw new ArithmeticException();
-		}
-		for (IMessage msg : getMessages()) {
-			if (msg instanceof HungerMessage) { //TODO
-				feed((HungerMessage) msg);
-			}
-		}
-
-		checkAndHandleCombat();
-
-		if (!state.closeCombat && !state.beFollower && !state.captureingFlux) { //zajmij flux, by nam nie bruzdzil :)
-			for (FluxDeposit dep : rc.senseNearbyFluxDeposits()) {
-				FluxDepositInfo fdi = rc.senseFluxDepositInfo(dep);
-				if (fdi.team != myTeam) {
-					state.captureingFlux = true;
-					while (!refreshLocation().equals(fdi.location)) { //dojdz
-						moveArmy(curLoc.add(curLoc.directionTo(fdi.location)));
-						handleInts();
-					}
-					captureFluxDeposidUnderArchon();
-					break;
+			handleIntsDepth++;
+			for (IMessage msg : getMessages()) {
+				if (msg instanceof HungerMessage) { //TODO
+					feed((HungerMessage) msg);
+				} else if (msg instanceof RequestBlockMessage) {
+					goStupid(40);
 				}
 			}
-			state.captureingFlux = false;
-		}
 
-		/*
-		if (rand.nextInt(10) == 0) {
-		updateMap();
-		}
-		 */
+			checkAndHandleCombat();
 
-		if (state.buildSoldiers && timeNow % 20 <= (state.closeCombat ? 2 : 3)) {
-			buildSoldiersIfNeeded();
-		}
+			if (!state.closeCombat && !state.beFollower && !state.captureingFlux) { //zajmij flux, by nam nie bruzdzil :)
+				for (FluxDeposit dep : rc.senseNearbyFluxDeposits()) {
+					FluxDepositInfo fdi = rc.senseFluxDepositInfo(dep);
+					if (fdi.team != myTeam) {
+						state.captureingFlux = true;
+						while (!refreshLocation().equals(fdi.location)) { //dojdz
+							moveArmy(curLoc.add(curLoc.directionTo(fdi.location)));
+							handleInts();
+						}
+						captureFluxDeposidUnderArchon();
+						break;
+					}
+				}
+				state.captureingFlux = false;
+			}
 
-		if (timeNow % 4 == 1) {
-			healSomeGroundUnits();
-		}
+			/*
+			if (rand.nextInt(10) == 0) {
+			updateMap();
+			}
+			 */
 
-		/*
-		if (state.captureingFlux) {
+			if (state.buildSoldiers && timeNow % 20 <= (state.closeCombat ? 2 : 3)) {
+				buildSoldiersIfNeeded();
+			}
 
-		if (rand.nextInt(40) == 0) {
-		requestBlock(rand.nextInt(5) + 3);
-		}
-		if (rand.nextInt(20) == 0) {
-		buildWorker();
-		}
-		} */
+			if (timeNow % 4 == 1) {
+				checkGameState();
+				healSomeGroundUnits();
+			}
 
-		handleIntsDepth--;
+			/*
+			if (state.captureingFlux) {
+
+			if (rand.nextInt(40) == 0) {
+			requestBlock(rand.nextInt(5) + 3);
+			}
+			if (rand.nextInt(20) == 0) {
+			buildWorker();
+			}
+			} */
+
+			handleIntsDepth--;
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 
 	protected void captureFluxDeposidUnderArchon() throws GameActionException
 	{
+
 		for (int i = 1; i <= GameConstants.ROUNDS_TO_CAPTURE + 20; i++) {
 			FluxDeposit cfd = rc.senseFluxDepositAtLocation(refreshLocation());
 			if (cfd == null) {
@@ -675,6 +711,9 @@ public class Archon extends Unit
 			Robot robot = rc.senseGroundRobotAtLocation(loc);
 			if (robot != null) { //TODO
 				RobotInfo ri = rc.senseRobotInfo(robot);
+				if (state.enemyIsACoward && ri.type == RobotType.SOLDIER) {
+					return;
+				}
 				double howMuch = Math.min(ri.maxEnergon - ri.eventualEnergon, GameConstants.ENERGON_RESERVE_SIZE);
 				feed(loc, msg.rl, howMuch);
 			}

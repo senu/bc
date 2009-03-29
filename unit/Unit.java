@@ -685,6 +685,7 @@ public abstract class Unit
 
 	protected void healSomeGroundUnits() throws GameActionException //ale nie workerow
 	{
+		
 		try {
 			yieldSmallBC();
 			refreshLocation();
@@ -698,9 +699,13 @@ public abstract class Unit
 				}
 				if (robot != null) {
 					RobotInfo ri = rc.senseRobotInfo(robot);
-					if (ri.team == myTeam && ri.type == RobotType.SOLDIER &&
-							(ri.eventualEnergon / ri.maxEnergon) < policy.healIfWeakerThan &&
+					if (ri.team == myTeam && (ri.eventualEnergon / ri.maxEnergon) < policy.healIfWeakerThan &&
 							rc.getEnergonLevel() > policy.minUnitEnergonLevel_Feed) {
+						if (getState().enemyIsACoward){
+							if (ri.type != RobotType.WORKER) {
+								return;
+							}
+						}
 						double howMuch = Math.min(ri.maxEnergon - ri.eventualEnergon, GameConstants.ENERGON_RESERVE_SIZE);
 						feed(loc, RobotLevel.ON_GROUND, howMuch);
 					//debug_print("feed %f", howMuch);

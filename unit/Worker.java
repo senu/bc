@@ -92,7 +92,7 @@ public class Worker extends Unit
 	protected final void handleInts() throws GameActionException
 	{
 		handleIntsDepth++;
-		if (handleIntsDepth >= 3) {
+		if (handleIntsDepth >= 6) {
 			throw new ArithmeticException();
 		}
 
