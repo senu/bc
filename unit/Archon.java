@@ -231,7 +231,7 @@ public class Archon extends Unit
 	protected void findFlux2() throws GameActionException
 	{
 		for (int j = 1;; j++) {
-			rc.setIndicatorString(0, String.format("FF2 %d", j));
+//			rc.setIndicatorString(0, String.format("FF2 %d", j));
 
 			Direction dir;
 			dir = rc.senseDirectionToOwnedFluxDeposit();
@@ -324,7 +324,7 @@ public class Archon extends Unit
 					} else {
 						targetLoc = MapUtils.randLocRange(curLoc, 25, 25, rand); //TODO_
 					}
-					rc.setIndicatorString(2, String.format("leader: new loc: %s -> %s", refreshLocation(), targetLoc));
+				//	rc.setIndicatorString(2, String.format("leader: new loc: %s -> %s", refreshLocation(), targetLoc));
 				} else {
 					WalkResult wr = moveArmy(targetLoc);
 					if (wr != WalkResult.Walking) {
@@ -426,7 +426,7 @@ public class Archon extends Unit
 	private final void goStupid(int howLong) throws GameActionException
 	{
 		for (int i = 1; i <= howLong; i++) {
-		rc.setIndicatorString(1, String.format("go_stupid %d", i));
+//		rc.setIndicatorString(1, String.format("go_stupid %d", i));
 
 			yieldMv();
 
@@ -462,7 +462,7 @@ public class Archon extends Unit
 
 	private final void findFlux() throws GameActionException
 	{
-		rc.setIndicatorString(1, "find_flux");
+//		rc.setIndicatorString(1, "find_flux");
 		//ping();
 
 		Direction dir;
@@ -615,7 +615,7 @@ public class Archon extends Unit
 //			rc.setIndicatorString(1, Boolean.toString(state.enemyIsACoward));
 			timeNow = Clock.getRoundNum();
 
-			handleIntsDepth++;
+//			handleIntsDepth++;
 			for (IMessage msg : getMessages()) {
 				if (msg instanceof HungerMessage) { //TODO
 					feed((HungerMessage) msg);
@@ -668,7 +668,7 @@ public class Archon extends Unit
 			}
 			} */
 
-			handleIntsDepth--;
+//			handleIntsDepth--;
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
