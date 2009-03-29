@@ -58,7 +58,7 @@ public class Archon extends Unit
 		groupArchons();
 
 		if (myIdx != 0 && myIdx != 1) {
-			rc.suicide();
+//			rc.suicide();
 		} else {
 			debug_print("leader: %d", leaderIdx);
 		}
@@ -179,7 +179,10 @@ public class Archon extends Unit
 				if (state.beFollower) {
 					followTheLeader();
 				} else {
-					targetLoc = findAndDestroy(targetLoc);
+					targetLoc = seekAndDestroy(targetLoc);
+					if (state.enemyIsACoward) {
+						break;
+					}
 					rc.setIndicatorString(1, String.format("fad: %s -> %s", refreshLocation(), targetLoc));
 				}
 			}
@@ -187,13 +190,31 @@ public class Archon extends Unit
 			handleInts();
 		}
 
+		//zbieraj
+		for (int loop = 0;; loop++) {
+			findFlux();
+			handleInts();
+		}
+
 	}
 
-	protected MapLocation findAndDestroy(MapLocation targetLoc) throws GameActionException
+	protected MapLocation seekAndDestroy(MapLocation targetLoc) throws GameActionException
 	{
 		if (!state.beFollower) { //lead
 			if (targetLoc.equals(refreshLocation())) {
 				Direction fluxDir = rc.senseDirectionToUnownedFluxDeposit();
+				if (Clock.getRoundNum() > 1200) {
+					if (fluxDir == Direction.NONE) {
+						state.enemyIsACoward = true;
+						state.buildSoldiers = false;
+						state.buildWorkers = true;
+						return curLoc;
+					} else {
+						state.enemyIsACoward = false;
+						state.buildSoldiers = true;
+						state.buildWorkers = false;
+					}
+				}
 				if (fluxDir != Direction.NONE && fluxDir != Direction.OMNI) {
 					targetLoc = refreshLocation().add(fluxDir);
 				} else {
@@ -295,7 +316,7 @@ public class Archon extends Unit
 		}
 		if (!state.beFollower) {
 			waitForFollower();
-			for (int k = 1; k <= 30; k++) {
+			for (int k = 1; k <= 25; k++) {
 				int count = 0;
 				refreshLocation();
 				for (RobotInfo ri : getAlliedGroundUnits()) {
@@ -629,7 +650,7 @@ public class Archon extends Unit
 				rc.yield(); //TODO to trwa 2 tury
 			}
 			if (refreshLocation().distanceSquaredTo(enemyLoc) <= 5) {
-				if (health() < 0.40) {
+				if (health() < 0.38) {
 					stupidWalkStep(curLoc.add(curLoc.directionTo(enemyLoc).opposite()));
 				}
 			} else {

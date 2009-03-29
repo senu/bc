@@ -10,4 +10,6 @@ public class ArchonState extends UnitState
 	public boolean beFollower = false;
 	public boolean buildSoldiers = false;
 	public boolean captureingFlux = false;
+	public boolean enemyIsACoward = false;
+	public boolean buildWorkers = false;
 }
